@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanEmbed — Subsurface Temperature Reconstruction</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div>
+                <span class="logo">🌊 OceanEmbed</span>
+                <span class="logo-sub">SIH26066 · Subsurface Temperature Reconstruction</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="data-status" id="dataStatus">
+                <span class="status-dot unknown" id="statusDot"></span>
+                <span id="statusText">Loading...</span>
+            </div>
+            <a href="/metrics" class="nav-link">📊 Metrics</a>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-container">
+        <!-- Map Panel -->
+        <div class="map-panel">
+            <div class="map-overlay">
+                <strong>Indian Ocean Domain</strong><br>
+                Click any point to predict subsurface temperature
+            </div>
+            <div id="map"></div>
+            <div class="map-click-hint" id="mapHint">📍 Click on the ocean to start</div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Input Card -->
+            <div class="card">
+                <div class="card-title"><span class="icon">🎯</span> Location & Prediction</div>
+                
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Latitude</label>
+                        <input type="number" id="inputLat" min="-30" max="30" step="0.1" placeholder="e.g. 10.5">
+                    </div>
+                    <div class="input-group">
+                        <label>Longitude</label>
+                        <input type="number" id="inputLon" min="30" max="120" step="0.1" placeholder="e.g. 75.3">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Date</label>
+                    <input type="date" id="inputDate" value="2022-06-15">
+                </div>
+
+                <!-- Optional Surface Features -->
+                <details style="margin-top: 8px;">
+                    <summary style="font-size: 0.78em; color: var(--text-muted); cursor: pointer;">
+                        ⚙️ Optional: Override surface features
+                    </summary>
+                    <div style="margin-top: 8px;">
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>SST (°C)</label>
+                                <input type="number" id="inputSST" step="0.1" placeholder="Auto-estimated">
+                            </div>
+                            <div class="input-group">
+                                <label>SSH (m)</label>
+                                <input type="number" id="inputSSH" step="0.01" placeholder="Auto-estimated">
+                            </div>
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>Wind u10 (m/s)</label>
+                                <input type="number" id="inputU10" step="0.1" placeholder="Auto-estimated">
+                            </div>
+                            <div class="input-group">
+                                <label>Wind v10 (m/s)</label>
+                                <input type="number" id="inputV10" step="0.1" placeholder="Auto-estimated">
+                            </div>
+                        </div>
+                        <div style="font-size: 0.72em; color: var(--text-muted); margin-top: 4px;">
+                            ℹ️ SSS unavailable (SMOS 403 Forbidden). Model uses: Lat, Lon, SST, SSH, U10, V10.
+                        </div>
+                    </div>
+                </details>
+
+                <button class="primary" id="predictBtn" onclick="runPrediction()">
+                    🔮 Predict Temperature Profile
+                </button>
+                
+                <div id="dataModeBadge" style="margin-top: 8px; font-size: 0.8em; text-align: center;"></div>
+                <div id="featureStatusList"></div>
+
+                <div class="location-info" id="locationInfo" style="display: none;">
+                    <div class="location-item">
+                        <div class="label">Position</div>
+                        <div class="value" id="infoPosition">—</div>
+                    </div>
+                    <div class="location-item">
+                        <div class="label">Date</div>
+                        <div class="value" id="infoDate">—</div>
+                    </div>
+                    <div class="location-item">
+                        <div class="label">SST Input</div>
+                        <div class="value" id="infoSST">—</div>
+                    </div>
+                    <div class="location-item">
+                        <div class="label">Confidence</div>
+                        <div class="value" id="infoConfidence">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Temperature Profile Chart -->
+            <div class="card">
+                <div class="card-title"><span class="icon">📈</span> Temperature vs Depth Profile</div>
+                <div class="chart-container" id="profileChart">
+                    <div class="empty-state">
+                        <div class="icon">🌊</div>
+                        <p>Click a point on the map to see<br>the predicted temperature profile</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Explainability Panel -->
+            <div class="card">
+                <div class="card-title"><span class="icon">🔍</span> Feature Influence (Explainability)</div>
+                <div id="explainabilityPanel">
+                    <div class="empty-state" style="padding: 15px;">
+                        <p style="font-size: 0.8em;">Run a prediction to see which<br>surface features influenced it</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

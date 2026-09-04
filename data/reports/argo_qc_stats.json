@@ -1,0 +1,23 @@
+{
+  "raw_records": 12136346,
+  "raw_floats": 391,
+  "after_qc": 47339329,
+  "deep_profiles": 74079,
+  "selected": 3000,
+  "interp_ok": 2992,
+  "final_profiles": 2992,
+  "reaching_1000m": 2992,
+  "reaching_2000m": 2606,
+  "lat_range": [
+    -29.9963,
+    26.82595333333333
+  ],
+  "lon_range": [
+    32.32004928588867,
+    119.961
+  ],
+  "date_range": [
+    "2019-01-01",
+    "2024-12-31"
+  ]
+}

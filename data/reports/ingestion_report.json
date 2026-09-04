@@ -1,0 +1,25 @@
+{
+  "dataset_type": "REAL DATA",
+  "final_samples": 2992,
+  "complete_samples": 2944,
+  "n_floats": 689,
+  "date_range": [
+    "2019-01-01",
+    "2024-12-31"
+  ],
+  "lat_range": [
+    -29.9963,
+    26.82595333333333
+  ],
+  "lon_range": [
+    32.32004928588867,
+    119.961
+  ],
+  "surface_coverage": {
+    "sst": 2953,
+    "ssh": 2992,
+    "u10": 2982,
+    "v10": 2982,
+    "sss": 0
+  }
+}

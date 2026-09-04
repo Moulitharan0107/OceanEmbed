@@ -1,0 +1,6 @@
+{
+  "note": "Training completed in 73 epochs, early stopping",
+  "best_val_loss": 0.1236,
+  "final_train_loss": 0.1818,
+  "training_time_s": 184.0
+}

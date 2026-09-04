@@ -1,0 +1,68 @@
+# ============================================
+# OceanEmbed .gitignore
+# ============================================
+
+# Freebuff internal
+.freebuff/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test files at project root
+*.nc
+
+# ============================================
+# LARGE RAW DATA (re-downloadable from ERDDAP)
+# ============================================
+data/raw/argo/
+data/raw/oisst/
+data/raw/ssh/
+data/raw/sss/
+data/raw/era5/
+data/raw/surface_cache/
+data/raw/wind/
+
+# ============================================
+# TEMPORARY / GENERATED FILES
+# ============================================
+data/reports/training_curves.png
+data/reports/predicted_vs_actual_examples.png
+data/reports/depthwise_rmse.png
+
+# ============================================
+# KEEP: Processed dataset, model checkpoints,
+#        reports (metrics), scripts, backend,
+#        static, config, README
+# ============================================
+# data/processed/         ← KEEP (789 KB training dataset)
+# models/checkpoints/    ← KEEP (trained model ~2.5 MB)
+# scripts/               ← KEEP
+# backend/               ← KEEP
+# static/                ← KEEP
+# config.py              ← KEEP
+# requirements.txt       ← KEEP
+# README.md              ← KEEP

@@ -1,0 +1,63 @@
+{
+  "dataset_type": "REAL DATA",
+  "n_samples": 2992,
+  "n_complete": 2944,
+  "date_range": [
+    "2019-01-01",
+    "2024-12-31"
+  ],
+  "lat_range": [
+    -29.9963,
+    26.82595333333333
+  ],
+  "lon_range": [
+    32.32004928588867,
+    119.961
+  ],
+  "n_floats": 689,
+  "features": {
+    "sst": "NOAA OISST v2.1 (ncdcOisst21Agg) - ERDDAP cached quarterly NetCDF",
+    "ssh": "NESDIS SSH Altimetry (nesdisSSH1day) - ERDDAP cached quarterly NetCDF",
+    "u10": "Open-Meteo ERA5 reanalysis wind",
+    "v10": "Open-Meteo ERA5 reanalysis wind",
+    "sss": "DROPPED - SMOS 403 Forbidden from ERDDAP"
+  },
+  "depth_grid_m": [
+    0,
+    10,
+    20,
+    30,
+    40,
+    50,
+    75,
+    100,
+    125,
+    150,
+    175,
+    200,
+    250,
+    300,
+    350,
+    400,
+    450,
+    500,
+    600,
+    700,
+    800,
+    900,
+    1000,
+    1100,
+    1200,
+    1300,
+    1400,
+    1500,
+    1600,
+    1700,
+    1800,
+    1900,
+    2000
+  ],
+  "argo_source": "NOAA ERDDAP Argo, Indian Ocean 2019-2024",
+  "interpolation": "nearest-neighbor spatial, same-day temporal",
+  "creation_date": "2026-09-03T23:40:44.009683"
+}
