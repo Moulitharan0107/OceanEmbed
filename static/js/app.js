@@ -26,10 +26,9 @@ map.on('drag', function() {
     map.panInsideBounds(paddedBounds, { animate: false });
 });
 
-// Dark theme tiles — CARTO raster dark_all (free, no API key)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    subdomains: 'abcd',
+// Dark theme tiles — OpenStreetMap with CSS dark filter (guaranteed free, no key)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 19,
 }).addTo(map);
 
@@ -69,7 +68,7 @@ async function loadStatus() {
         dot.className = `status-dot ${data.data_mode}`;
         
         if (data.data_mode === 'real') {
-            text.textContent = `OceanEmbed · ${data.n_samples} test samples`;
+            text.textContent = `OceanEmbed · Trained Model`;
         } else if (data.data_mode === 'live') {
             text.textContent = `Live Data · ${data.n_samples} samples`;
         } else if (data.data_mode === 'cached') {
@@ -168,7 +167,11 @@ async function runPrediction() {
         
     } catch (e) {
         console.error('Prediction error:', e);
-        alert(`Prediction failed: ${e.message}`);
+        // Friendly message for out-of-bounds errors
+        const msg = e.message.includes('outside') ?
+            'This model is trained only for the North Indian Ocean region. Please select a point within India\'s surrounding waters.' :
+            `Prediction failed: ${e.message}`;
+        alert(msg);
     } finally {
         btn.disabled = false;
         btn.textContent = '🔮 Predict Temperature Profile';

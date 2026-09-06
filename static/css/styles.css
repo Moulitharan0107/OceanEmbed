@@ -392,6 +392,11 @@ button.primary:disabled {
     }
 }
 
+/* Dark filter for OpenStreetMap tiles */
+.leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9) saturate(0.8);
+}
+
 /* Clickable hint on map */
 .map-click-hint {
     position: absolute;
