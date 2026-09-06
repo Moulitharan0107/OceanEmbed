@@ -9,22 +9,20 @@
 
 // Exact trained domain: North Indian Ocean 0-25N, 40-100E
 const bounds = L.latLngBounds([[0, 40], [25, 100]]);
-const paddedBounds = bounds.pad(0.05);
-const minZoomLevel = 4;
 
-// Create map with no default zoom control (we'll add it after)
+// Create map — free zoom and pan, no restrictions
 const map = L.map('map', {
     center: [12.5, 70],
-    zoom: minZoomLevel,
-    minZoom: minZoomLevel,
-    maxZoom: 12,
+    zoom: 5,
+    minZoom: 2,
+    maxZoom: 19,
     zoomControl: false,
-    worldCopyJump: false,
-    maxBoundsViscosity: 1.0
+    worldCopyJump: true,
+    scrollWheelZoom: true
 });
 
-// Fit to padded bounds on load
-map.fitBounds(paddedBounds);
+// Fit to the trained region on load (initial view, not a lock)
+map.fitBounds(bounds);
 
 // Add zoom control to top-right
 L.control.zoom({ position: 'topright' }).addTo(map);
@@ -35,29 +33,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
 }).addTo(map);
 
-// === REGION LOCK: three layers of defense ===
-
-// 1. Clamp drag so map never leaves padded bounds
-map.on('drag', function() {
-    map.panInsideBounds(paddedBounds, { animate: false });
-});
-
-// 2. Clamp zoom so user cannot zoom out past the fitted view
-map.on('zoomend', function() {
-    var z = map.getZoom();
-    if (z < minZoomLevel) {
-        map.setZoom(minZoomLevel);
-    }
-});
-
-// 3. Force back inside bounds after any move (catches edge cases)
-map.on('moveend', function() {
-    if (!paddedBounds.contains(map.getBounds())) {
-        map.fitBounds(paddedBounds, { animate: false, maxZoom: map.getZoom() });
-    }
-});
-
-console.log('Map bounds locked to North Indian Ocean: 0-25N, 40-100E (padded 5%)');
+console.log('Map initialized — free zoom and pan enabled');
 
 // Dotted boundary rectangle for trained domain — dark navy for high contrast
 L.rectangle([[0, 40], [25, 100]], {
@@ -267,7 +243,7 @@ function updateMapMarker(lat, lon, data) {
         </div>
     `).openPopup();
     
-    map.setView([lat, lon], Math.max(map.getZoom(), minZoomLevel));
+    map.setView([lat, lon], Math.max(map.getZoom(), 5));
 }
 
 // ============================================================
