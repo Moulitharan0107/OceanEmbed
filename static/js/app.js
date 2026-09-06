@@ -7,29 +7,33 @@
 //  Map Setup
 // ============================================================
 
+const trainedBounds = [[-3, 37], [28, 103]];
 const map = L.map('map', {
-    center: [12, 72],   // North Indian Ocean (Bay of Bengal / Arabian Sea)
+    center: [12, 72],
     zoom: 4,
     minZoom: 3,
     maxZoom: 12,
-    maxBounds: [[-45, 20], [45, 130]],
+    maxBounds: trainedBounds,
     maxBoundsViscosity: 1.0,
 });
+map.fitBounds(trainedBounds);
 
-// Dark ocean basemap
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-    subdomains: 'abcd',
+// Free tile layer (no API key required)
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
     maxZoom: 19,
 }).addTo(map);
 
-// Indian Ocean boundary box
-const regionBox = L.rectangle([[-30, 30], [30, 120]], {
-    color: '#00BCD4',
-    weight: 1,
-    opacity: 0.3,
-    fillOpacity: 0.05,
-    dashArray: '5, 5',
+// Model trained region: North Indian Ocean (0-25N, 40-100E)
+L.rectangle([[0, 40], [25, 100]], {
+    color: '#00bcd4', weight: 2, fill: false, dashArray: '4,4'
+}).addTo(map);
+L.marker([25.3, 70], {
+    icon: L.divIcon({
+        className: '',
+        html: '<div style="font-size:11px;color:#00bcd4;white-space:nowrap;text-shadow:1px 1px 2px #000">Model trained region: North Indian Ocean (0-25&deg;N, 40-100&deg;E)</div>',
+        iconAnchor: [0, 0]
+    })
 }).addTo(map);
 
 // Markers layer
@@ -40,6 +44,12 @@ let profileData = null;
 map.on('click', function(e) {
     const lat = Math.round(e.latlng.lat * 10) / 10;
     const lon = Math.round(e.latlng.lng * 10) / 10;
+    
+    // Defense: reject clicks outside trained region
+    if (lat < 0 || lat > 25 || lon < 40 || lon > 100) {
+        alert('Selected point is outside the model\'s trained region (0-25°N, 40-100°E).');
+        return;
+    }
     
     document.getElementById('inputLat').value = lat;
     document.getElementById('inputLon').value = lon;
@@ -62,13 +72,13 @@ async function loadStatus() {
         dot.className = `status-dot ${data.data_mode}`;
         
         if (data.data_mode === 'real') {
-            text.textContent = `REAL MODEL · ${data.n_profiles || data.n_samples} profiles · 2019-2024`;
+            text.textContent = `OceanEmbed · ${data.n_samples} test samples`;
         } else if (data.data_mode === 'live') {
             text.textContent = `Live Data · ${data.n_samples} samples`;
         } else if (data.data_mode === 'cached') {
-            text.textContent = `CACHED SAMPLE MODEL · ${data.n_samples} samples`;
+            text.textContent = `OceanEmbed · ${data.n_samples} samples`;
         } else if (data.data_mode === 'synthetic') {
-            text.textContent = `CACHED SAMPLE MODEL · ${data.n_samples} samples`;
+            text.textContent = `OceanEmbed · ${data.n_samples} samples`;
         } else {
             text.textContent = 'Initializing...';
         }
