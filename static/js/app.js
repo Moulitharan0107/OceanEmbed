@@ -18,6 +18,7 @@ const map = L.map('map', {
     maxZoom: 12,
     maxBounds: paddedBounds,
     maxBoundsViscosity: 1.0,
+    zoomControl: { position: 'topright' }
 });
 map.fitBounds(paddedBounds);
 
@@ -32,19 +33,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
 }).addTo(map);
 
-// Dotted boundary rectangle for trained domain
+// Dotted boundary rectangle for trained domain — dark navy for high contrast on light basemap
 L.rectangle([[0, 40], [25, 100]], {
-    color: '#00e5ff',
-    weight: 2,
+    color: '#0a1a2f',
+    weight: 3,
     fill: false,
     dashArray: '6,6'
 }).addTo(map);
 
-// Label for the trained region
+// Label for the trained region — dark pill with white text
 L.marker([25.8, 70], {
     icon: L.divIcon({
         className: '',
-        html: '<div style="background: rgba(10,22,40,0.85); border: 1px solid rgba(0,229,255,0.3); border-radius: 4px; padding: 3px 8px; font-size: 11px; color: #00e5ff; white-space: nowrap; font-family: Inter, sans-serif;">Model Trained Region: North Indian Ocean (0°–25°N, 40°–100°E)</div>',
+        html: '<div style="background: rgba(10,22,40,0.92); border: 1px solid rgba(0,229,255,0.4); border-radius: 4px; padding: 4px 10px; font-size: 11px; color: #ffffff; white-space: nowrap; font-family: Inter, sans-serif; letter-spacing: 0.3px;">Model Trained Region: North Indian Ocean (0°–25°N, 40°–100°E)</div>',
         iconSize: [0, 0],
         iconAnchor: [-8, 12]
     })
