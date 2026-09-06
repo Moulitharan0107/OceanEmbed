@@ -24,11 +24,14 @@ _ssh_nc_files = {}
 _wind_cache = {}
 _argo_profiles = None
 _initialized = False
+_ocean_mask_lats = None  # 1-D array of latitudes in ocean mask
+_ocean_mask_lons = None  # 1-D array of longitudes in ocean mask
+_ocean_mask = None       # 2-D boolean array (True = ocean)
 
 
 def init_surface_lookup():
     """Load cached surface data into memory for fast lookups."""
-    global _sst_nc_files, _ssh_nc_files, _wind_cache, _argo_profiles, _initialized
+    global _sst_nc_files, _ssh_nc_files, _wind_cache, _argo_profiles, _initialized, _ocean_mask_lats, _ocean_mask_lons, _ocean_mask
 
     if _initialized:
         return
@@ -62,7 +65,48 @@ def init_surface_lookup():
         _argo_profiles["date"] = pd.to_datetime(_argo_profiles["time"]).dt.tz_localize(None).dt.normalize()
         print(f"  [Argo] Loaded {len(_argo_profiles)} QC'd profiles")
 
+    # Build ocean mask from OISST — any cell with valid SST in *any* timestep is ocean
+    try:
+        if len(_sst_nc_files) > 0:
+            ds0 = xr.open_dataset(_sst_nc_files[0])
+            # Take the first timestep's SST; ocean cells have non-NaN values
+            sst_first = ds0.sst.isel(time=0, zlev=0).values
+            mask = ~np.isnan(sst_first)
+            _ocean_mask_lats = ds0.latitude.values.copy()
+            _ocean_mask_lons = ds0.longitude.values.copy()
+            _ocean_mask = mask
+            n_ocean = int(np.sum(mask))
+            n_total = mask.size
+            print(f"  [OCEAN MASK] Built from OISST: {n_ocean}/{n_total} ocean cells ({100*n_ocean/n_total:.1f}%)")
+            ds0.close()
+        else:
+            print("  [OCEAN MASK] No OISST files — mask unavailable")
+    except Exception as e:
+        print(f"  [OCEAN MASK] Failed to build mask: {e}")
+
     _initialized = True
+
+
+def is_ocean(lat: float, lon: float) -> bool:
+    """Check if a lat/lon point is on ocean using the OISST-derived mask.
+
+    Returns True if the nearest grid cell has valid (non-NaN) SST data,
+    meaning it's over ocean. Returns False (land) if the mask is unavailable
+    or the point falls on a NaN cell.
+    """
+    if _ocean_mask is None or _ocean_mask_lats is None:
+        # No mask available — be permissive (don't block predictions)
+        return True
+
+    lat_idx = int(np.argmin(np.abs(_ocean_mask_lats - lat)))
+    lon_idx = int(np.argmin(np.abs(_ocean_mask_lons - lon)))
+
+    if lat_idx < 0 or lat_idx >= _ocean_mask.shape[0]:
+        return False
+    if lon_idx < 0 or lon_idx >= _ocean_mask.shape[1]:
+        return False
+
+    return bool(_ocean_mask[lat_idx, lon_idx])
 
 
 def _lookup_sst(lat: float, lon: float, date: datetime) -> Optional[float]:

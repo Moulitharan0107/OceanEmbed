@@ -23,7 +23,7 @@ import config
 from models.ocean_model import OceanEmbedModel
 from models.training import OceanEmbedTrainer
 from scripts.data_ingestion import get_data_status, generate_synthetic_dataset, _load_static_dataset
-from scripts.surface_lookup import lookup_real_features, find_nearest_argo, init_surface_lookup
+from scripts.surface_lookup import lookup_real_features, find_nearest_argo, init_surface_lookup, is_ocean
 
 # ============================================================
 #  App Initialization
@@ -249,7 +249,14 @@ async def predict(req: PredictionRequest):
     """
     if trainer is None:
         raise HTTPException(status_code=503, detail="Model not loaded. Please wait for initialization.")
-    
+
+    # --- Land / Ocean gate (in addition to lat/lon bounds already validated by Pydantic) ---
+    if not is_ocean(req.latitude, req.longitude):
+        raise HTTPException(
+            status_code=400,
+            detail="Selected point is on land. Please select an ocean point to get a subsurface temperature prediction.",
+        )
+
     # Get real features with source tracking
     features, feature_meta = get_features(req.latitude, req.longitude, req.date)
     

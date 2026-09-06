@@ -213,9 +213,14 @@ async function runPrediction() {
     } catch (e) {
         console.error('Prediction error:', e);
         // Friendly message for out-of-bounds errors
-        const msg = e.message.includes('outside') ?
-            'This model is trained only for the North Indian Ocean region. Please select a point within India\'s surrounding waters.' :
-            `Prediction failed: ${e.message}`;
+        let msg;
+        if (e.message.includes('land') || e.message.includes('on land')) {
+            msg = 'Selected point is on land. Please select an ocean point to get a subsurface temperature prediction.';
+        } else if (e.message.includes('outside') || e.message.includes('region')) {
+            msg = 'This model is trained only for the North Indian Ocean region. Please select a point within India\'s surrounding waters.';
+        } else {
+            msg = `Prediction failed: ${e.message}`;
+        }
         alert(msg);
     } finally {
         btn.disabled = false;
