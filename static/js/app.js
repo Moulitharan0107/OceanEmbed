@@ -108,16 +108,25 @@ async function runPrediction() {
         const sshEl = document.getElementById('inputSSH');
         const u10El = document.getElementById('inputU10');
         const v10El = document.getElementById('inputV10');
+        const sssEl = document.getElementById('inputSSS');
+        const curUEl = document.getElementById('inputCurrentU');
+        const curVEl = document.getElementById('inputCurrentV');
         
         const sst = sstEl ? sstEl.value : '';
         const ssh = sshEl ? sshEl.value : '';
         const u10 = u10El ? u10El.value : '';
         const v10 = v10El ? v10El.value : '';
+        const sss = sssEl ? sssEl.value : '';
+        const curU = curUEl ? curUEl.value : '';
+        const curV = curVEl ? curVEl.value : '';
         
         if (sst) body.sst = parseFloat(sst);
         if (ssh) body.ssh = parseFloat(ssh);
         if (u10) body.u10 = parseFloat(u10);
         if (v10) body.v10 = parseFloat(v10);
+        if (sss) body.sss = parseFloat(sss);
+        if (curU) body.current_u = parseFloat(curU);
+        if (curV) body.current_v = parseFloat(curV);
         
         const resp = await fetch('/api/predict', {
             method: 'POST',
@@ -217,6 +226,10 @@ function updateLocationInfo(data) {
     const features = data.features_used || {};
     const sst = features.sst ? features.sst.toFixed(1) : 'N/A';
     document.getElementById('infoSST').textContent = `${sst}°C`;
+    
+    const sss = features.sss ? features.sss.toFixed(1) : 'N/A';
+    const sssEl = document.getElementById('infoSSS');
+    if (sssEl) sssEl.textContent = `${sss} PSU`;
     
     const conf = data.confidence_score;
     const confEl = document.getElementById('infoConfidence');

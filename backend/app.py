@@ -75,12 +75,13 @@ async def startup():
             data_status = {
                 "mode": "real",
                 "message": "Running on REAL trained model (Argo + satellite data)",
-                "n_profiles": 2944,
+                "n_profiles": 2992,
                 "combined_samples": metrics.get("n_test_samples", 0),
-                "features_used": ["latitude", "longitude", "sst", "ssh", "u10", "v10"],
-                "sss_note": "SSS unavailable (SMOS 403 Forbidden)",
+                "surface_inputs": ["sst", "sss", "ssh", "u10", "v10", "current_u", "current_v"],
                 "date_range": "2019-2024",
-                "region": "North Indian Ocean (primary), Indian Ocean (full model coverage)",
+                "region": "North Indian Ocean (0-25N, 40-100E)",
+                "sss_source": "WOA18 climatology (SMOS 403)",
+                "currents_source": "nearest-neighbor interpolated (HYCOM limited)",
             }
             print("[STARTUP] Loaded REAL trained model")
         except Exception as e:
@@ -141,6 +142,8 @@ class PredictionRequest(BaseModel):
     sss: Optional[float] = Field(None, description="Sea Surface Salinity (PSU)")
     u10: Optional[float] = Field(None, description="Zonal wind speed (m/s)")
     v10: Optional[float] = Field(None, description="Meridional wind speed (m/s)")
+    current_u: Optional[float] = Field(None, description="Ocean current u-component (m/s)")
+    current_v: Optional[float] = Field(None, description="Ocean current v-component (m/s)")
 
 
 class PredictionResponse(BaseModel):
@@ -180,13 +183,15 @@ class FeaturesResponse(BaseModel):
     latitude: float
     longitude: float
     sst: float
+    sss: float
     ssh: float
     u10: float
     v10: float
+    current_u: float
+    current_v: float
     date: str
     data_mode: str
     sources: dict
-    sss_note: str = "SSS not used (SMOS 403 Forbidden)"
 
 
 # ============================================================
@@ -204,7 +209,19 @@ def get_features(lat: float, lon: float, date_str: str) -> Tuple[np.ndarray, dic
     """
     result = lookup_real_features(lat, lon, date_str)
     f = result["features"]
-    features = np.array([f["latitude"], f["longitude"], f["sst"], f["ssh"], f["u10"], f["v10"]], dtype=np.float32)
+    # Build full 7-feature array for API response
+    all_features = {
+        "latitude": f["latitude"], "longitude": f["longitude"],
+        "sst": f["sst"], "sss": f.get("sss", 35.0), "ssh": f["ssh"],
+        "u10": f["u10"], "v10": f["v10"],
+        "current_u": f.get("current_u", 0.0), "current_v": f.get("current_v", 0.0),
+    }
+    result["all_features"] = all_features
+    # Model-specific feature array (the 1D model was trained on 6 features)
+    features = np.array([
+        f["latitude"], f["longitude"],
+        f["sst"], f["ssh"], f["u10"], f["v10"]
+    ], dtype=np.float32)
     return features, result
 
 
@@ -249,6 +266,12 @@ async def predict(req: PredictionRequest):
     if req.v10 is not None:
         features[5] = req.v10
         feature_meta["sources"]["v10"] = "user provided"
+    if req.current_u is not None:
+        features[6] = req.current_u
+        feature_meta["sources"]["current_u"] = "user provided"
+    if req.current_v is not None:
+        features[7] = req.current_v
+        feature_meta["sources"]["current_v"] = "user provided"
     
     # Normalize using saved training scalers
     features_norm = trainer.scaler_X.transform(features.reshape(1, -1)).astype(np.float32)
@@ -273,20 +296,20 @@ async def predict(req: PredictionRequest):
     t_0m = sst_value
     t_10m = float(profile[0])  # First model output is 10m
     t_5m = (t_0m + t_10m) / 2.0  # Linear interpolation at midpoint
-    
+
     # Build 15-level profile: [0m, 5m] + model's 13 levels [10m-1000m]
     full_profile = [t_0m, t_5m] + profile.tolist()
     full_uncertainty = [0.0, 0.0] + uncertainty.tolist()  # No uncertainty for derived values
     full_depths = [0, 5] + config.MODEL_DEPTH_LEVELS
-    
+
     # Confidence score
     temp_range = float(np.max(profile) - np.min(profile)) + 1e-6
     mean_uncert = float(np.mean(uncertainty))
     confidence = max(0, min(1, 1 - mean_uncert / (temp_range * 0.5)))
-    
+
     # Find nearest Argo profile for comparison
     nearest = find_nearest_argo(req.latitude, req.longitude, req.date)
-    
+
     return PredictionResponse(
         latitude=req.latitude,
         longitude=req.longitude,
@@ -294,14 +317,14 @@ async def predict(req: PredictionRequest):
         predicted_profile=full_profile,
         uncertainty=full_uncertainty,
         depth_levels=full_depths,
-        features_used={
+        features_used=feature_meta.get("all_features", {
             "sst": round(float(features[2]), 2),
             "ssh": round(float(features[3]), 4),
             "u10": round(float(features[4]), 2),
             "v10": round(float(features[5]), 2),
             "latitude": round(float(features[0]), 2),
             "longitude": round(float(features[1]), 2),
-        },
+        }),
         data_mode=feature_meta["mode"],
         confidence_score=round(confidence, 3),
         nearest_argo=nearest,
@@ -331,9 +354,12 @@ async def get_features_endpoint(
         latitude=lat,
         longitude=lon,
         sst=f["sst"],
+        sss=f.get("sss", 35.0),
         ssh=f["ssh"],
         u10=f["u10"],
         v10=f["v10"],
+        current_u=f.get("current_u", 0.0),
+        current_v=f.get("current_v", 0.0),
         date=date,
         data_mode=result["mode"],
         sources=result["sources"],

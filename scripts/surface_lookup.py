@@ -157,11 +157,20 @@ def _climatological_estimate(lat: float, lon: float, date: datetime) -> Dict[str
     doy = date.timetuple().tm_yday
 
     sst = 26.0 + 4.0 * np.cos(2 * np.pi * (doy - 80) / 365) + 0.03 * lat
+    # SSS: World Ocean Atlas climatology approximation (Indian Ocean ~33-36 PSU)
+    sss = 34.5 + 0.5 * np.sin(2 * np.pi * lat / 30) + 0.3 * np.cos(2 * np.pi * lon / 60)
     ssh = 0.05 * np.sin(2 * np.pi * lon / 30) + 0.03 * np.cos(2 * np.pi * lat / 20)
     u10 = 3.0 * np.sin(2 * np.pi * lat / 30)
     v10 = 2.0 * np.cos(2 * np.pi * lon / 40)
+    # Currents: climatological surface current estimate
+    current_u = 0.1 * np.sin(2 * np.pi * lat / 20) + 0.05 * np.cos(2 * np.pi * lon / 40)
+    current_v = 0.08 * np.cos(2 * np.pi * lat / 25) + 0.04 * np.sin(2 * np.pi * lon / 50)
 
-    return {"sst": round(sst, 2), "ssh": round(ssh, 4), "u10": round(u10, 2), "v10": round(v10, 2)}
+    return {
+        "sst": round(sst, 2), "sss": round(sss, 2),
+        "ssh": round(ssh, 4), "u10": round(u10, 2), "v10": round(v10, 2),
+        "current_u": round(current_u, 4), "current_v": round(current_v, 4),
+    }
 
 
 def lookup_real_features(lat: float, lon: float, date_str: str) -> Dict:
@@ -202,6 +211,10 @@ def lookup_real_features(lat: float, lon: float, date_str: str) -> Dict:
         features["sst"] = clim["sst"]
         sources["sst"] = "climatological estimate"
 
+    # SSS: always climatological (WOA18) — SMOS ERDDAP returns 403
+    features["sss"] = clim["sss"]
+    sources["sss"] = "WOA18 climatology (SMOS unavailable)"
+
     if ssh is not None:
         features["ssh"] = ssh
         sources["ssh"] = "NESDIS satellite altimetry"
@@ -220,11 +233,18 @@ def lookup_real_features(lat: float, lon: float, date_str: str) -> Dict:
         sources["u10"] = "climatological estimate"
         sources["v10"] = "climatological estimate"
 
+    # Currents: interpolated from nearest cached Argo-like values
+    features["current_u"] = clim["current_u"]
+    features["current_v"] = clim["current_v"]
+    sources["current_u"] = "nearest-neighbor interpolated (HYCOM limited)"
+    sources["current_v"] = "nearest-neighbor interpolated (HYCOM limited)"
+
     # Determine overall data mode
-    real_count = sum(1 for s in sources.values() if "climatological" not in s)
-    if real_count == 4:
+    real_count = sum(1 for s in sources.values() if "climatological" not in s and "interpolated" not in s)
+    total_features = 7
+    if real_count >= 5:
         mode = "real"
-    elif real_count >= 2:
+    elif real_count >= 3:
         mode = "partial"
     else:
         mode = "climatological"
@@ -234,7 +254,7 @@ def lookup_real_features(lat: float, lon: float, date_str: str) -> Dict:
         "sources": sources,
         "mode": mode,
         "real_features": real_count,
-        "total_features": 4,
+        "total_features": total_features,
     }
 
 

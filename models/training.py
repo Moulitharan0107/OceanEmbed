@@ -447,7 +447,18 @@ class OceanEmbedTrainer:
         
         checkpoint = torch.load(path, map_location="cpu", weights_only=False)
         
-        model = create_model()
+        # Infer input_dim/output_dim from checkpoint state dict
+        sd = checkpoint["model_state_dict"]
+        input_dim = sd["feature_embedding.0.weight"].shape[1]
+        # Find last linear layer in output_head for output_dim
+        output_dim = None
+        for k, v in reversed(list(sd.items())):
+            if "output_head" in k and "weight" in k and v.ndim == 2:
+                output_dim = v.shape[0]
+                break
+        if output_dim is None:
+            output_dim = config.NUM_DEPTH_LEVELS
+        model = OceanEmbedModel(input_dim=input_dim, output_dim=output_dim)
         model.load_state_dict(checkpoint["model_state_dict"])
         
         trainer = cls(model=model)

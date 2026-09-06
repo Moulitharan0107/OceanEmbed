@@ -1,0 +1,38 @@
+{
+  "domain": {
+    "lat_min": 0.0,
+    "lat_max": 25.0,
+    "lon_min": 40.0,
+    "lon_max": 100.0
+  },
+  "resolution_deg": 0.25,
+  "n_lats": 100,
+  "n_lons": 240,
+  "n_dates": 1625,
+  "surface_vars": [
+    "sst",
+    "sss",
+    "ssh",
+    "u10",
+    "v10",
+    "current_u",
+    "current_v"
+  ],
+  "target_depths": [
+    10,
+    20,
+    30,
+    50,
+    75,
+    100,
+    125,
+    150,
+    200,
+    300,
+    500,
+    700,
+    1000
+  ],
+  "coverage_pct": 0.0,
+  "n_profiles_in_domain": 1040
+}
