@@ -1,0 +1,27 @@
+{
+  "overall_rmse": 1.5087687969207764,
+  "overall_mae": 1.042854905128479,
+  "overall_r2": 0.6183500289916992,
+  "n_test_samples": 293,
+  "model_params": 1310421,
+  "n_channels": 7,
+  "n_depths": 13,
+  "target_depths": [
+    "T_10m",
+    "T_20m",
+    "T_30m",
+    "T_50m",
+    "T_75m",
+    "T_100m",
+    "T_125m",
+    "T_150m",
+    "T_200m",
+    "T_300m",
+    "T_500m",
+    "T_700m",
+    "T_1000m"
+  ],
+  "real_data_fraction_mean": 0.033117104321718216,
+  "real_data_fraction_test": 0.01706484705209732,
+  "cmems_profiles_used": 97
+}

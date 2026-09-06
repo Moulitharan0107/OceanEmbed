@@ -9,7 +9,7 @@
 - Winds: Real from ERA5 (99.7%)
 - Currents: Real from CMEMS GLORYS12V1 where available, nearest-neighbor interpolation fallback
 
-CMEMS integration is active: 29/2,992 profiles (1.0%) have real CMEMS SSS and currents so far. Each profile query takes ~60 seconds via the `copernicusmarine` Python toolbox. Full extraction requires ~50 hours of API calls. All sources are clearly labeled in API responses and code (sss_source, currents_source columns).
+CMEMS integration is active: 96/2,992 profiles (3.2%) have real CMEMS SSS and currents. Each profile query takes ~60 seconds via the `copernicusmarine` Python toolbox. All sources are clearly labeled in API responses and code (sss_source, currents_source columns).
 
 ---
 
@@ -25,16 +25,16 @@ This is fundamentally different from a 1D point-wise model because it learns spa
 
 ---
 
-## Q3: Why is the spatial CNN's RMSE (1.57°C) worse than the 1D model (1.03°C)?
+## Q3: Why is the spatial CNN's RMSE (1.51°C) worse than the 1D model (1.03°C)?
 
-**Answer:** Because we trained on synthetic grid patches (point data with small perturbations), not real 0.25° gridded CMEMS data. The spatial CNN needs real spatial context to learn meaningful patterns. With real gridded data from CMEMS (SST, SSS, SSH, winds, currents), performance would improve significantly.
+**Answer:** We trained the spatial CNN on real 0.25° grid patches, but only 3.2% of profiles had real CMEMS SSS/currents data. The remaining 96.8% used fallback values (climatological SSS, interpolated currents). The spatial architecture needs substantially more real gridded data to learn meaningful spatial patterns. With higher CMEMS coverage (10-20%+), we expect the spatial CNN to outperform the 1D model.
 
 ---
 
 ## Q4: How do you handle missing data (SSS, currents)?
 
 **Answer:** We use a tiered approach with transparent source tracking:
-- **SSS:** Real from CMEMS GLORYS12V1 where available (29 profiles so far, 1.0%). WOA18 climatology as fallback for remaining profiles.
+- **SSS:** Real from CMEMS GLORYS12V1 where available (96 profiles, 3.2%). WOA18 climatology as fallback for remaining profiles.
 - **Currents:** Real from CMEMS GLORYS12V1 where available. Nearest-neighbor interpolation as fallback for remaining profiles.
 
 Every row in the dataset has `sss_source` and `currents_source` columns indicating whether the value is "cmems" (real) or "climatology_fallback"/"interpolated_fallback" (approximation). The API reports which source each feature came from. CMEMS extraction is ongoing at ~60 seconds per profile.
@@ -64,7 +64,7 @@ This is scientifically honest: SST physically represents near-surface temperatur
 ## Q7: What's the real-world accuracy?
 
 **Answer:** On the held-out test set (289 Argo profiles never seen during training):
-- **Overall RMSE:** 1.03°C (1D model) / 1.57°C (spatial CNN on synthetic data)
+- **Overall RMSE:** 1.03°C (1D production) / 1.51°C (spatial CNN, real patches, 3.2% CMEMS coverage)
 - **Best depths:** 500–1000m (RMSE 0.42–0.54°C)
 - **Challenging depths:** 50–100m (thermocline region, RMSE 1.35–1.78°C)
 
