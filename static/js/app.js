@@ -132,6 +132,16 @@ async function runPrediction() {
         return;
     }
     
+    // Date range validation (model trained 2019-2024, +6 months buffer)
+    if (date) {
+        const reqDate = new Date(date);
+        const maxDate = new Date('2025-06-30');
+        if (reqDate > maxDate) {
+            alert('Uncertainty will be high — this date is beyond the model\'s validated time range (2019-2024, plus 6 months buffer). Please select a date before 2025-06-30.');
+            return;
+        }
+    }
+    
     const btn = document.getElementById('predictBtn');
     btn.disabled = true;
     btn.textContent = '⏳ Predicting...';
@@ -203,6 +213,8 @@ async function runPrediction() {
             msg = 'Selected point is on land. Please select an ocean point to get a subsurface temperature prediction.';
         } else if (e.message.includes('outside') || e.message.includes('region')) {
             msg = 'This model is trained only for the North Indian Ocean region. Please select a point within India\'s surrounding waters.';
+        } else if (e.message.includes('Uncertainty') || e.message.includes('beyond') || e.message.includes('date')) {
+            msg = 'Uncertainty will be high — this date is beyond the model\'s validated time range (2019-2024, plus 6 months buffer). Please select a date before 2025-06-30.';
         } else {
             msg = `Prediction failed: ${e.message}`;
         }

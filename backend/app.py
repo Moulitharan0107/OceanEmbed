@@ -250,6 +250,20 @@ async def predict(req: PredictionRequest):
     if trainer is None:
         raise HTTPException(status_code=503, detail="Model not loaded. Please wait for initialization.")
 
+    # --- Date range validation ---
+    from datetime import datetime, timedelta
+    TRAINING_END_DATE = datetime(2024, 12, 31)
+    MAX_PREDICTION_DATE = TRAINING_END_DATE + timedelta(days=183)  # ~6 months buffer
+    try:
+        req_date = datetime.strptime(req.date, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        req_date = datetime.now()
+    if req_date > MAX_PREDICTION_DATE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Uncertainty will be high - this date ({req.date}) is beyond the model's validated time range (2019-2024, plus 6 months buffer). Please select a date before {MAX_PREDICTION_DATE.strftime('%Y-%m-%d')}.",
+        )
+
     # --- Land / Ocean gate (in addition to lat/lon bounds already validated by Pydantic) ---
     if not is_ocean(req.latitude, req.longitude):
         raise HTTPException(

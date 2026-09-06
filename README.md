@@ -35,9 +35,9 @@ Built for **INCOIS (Indian National Centre for Ocean Information Services)**, su
 | 4 | **u10** | Zonal Wind Speed at 10m (m/s) | ERA5 Reanalysis | ✅ Real (99.7%) |
 | 5 | **v10** | Meridional Wind Speed at 10m (m/s) | ERA5 Reanalysis | ✅ Real (99.7%) |
 | 6 | **current_u** | Ocean Current u-component (m/s) | CMEMS GLORYS12V1 (1%) + interpolated | 🔄 Partial (29 CMEMS / 2,963 fallback) |
-| 7 | **current_v** | Ocean Current v-component (m/s) | CMEMS GLORYS12V1 (1%) + interpolated | 🔄 Partial (29 CMEMS / 2,963 fallback) |
+| 7 | **current_v** | Ocean Current v-component (m/s) | CMEMS GLORYS12V1 (10.1%) + interpolated | 🔄 Partial (284 CMEMS / 2,708 fallback) |
 
-**Note:** SSS and currents are sourced from CMEMS GLORYS12V1 where available (96 profiles, 3.2% coverage). Remaining profiles use WOA18 climatology (SSS) and nearest-neighbor interpolation (currents) as fallback. Each row is labeled with its source (`sss_source` and `currents_source` columns) for transparency.
+**Note:** SSS and currents are sourced from CMEMS GLORYS12V1 where available (284 profiles, ~9.5% coverage, achieved via stratified representative sampling within hackathon time constraints). Remaining profiles use WOA18 climatology (SSS) and nearest-neighbor interpolation (currents) as fallback. Each row is labeled with its source (`sss_source` and `currents_source` columns) for transparency.
 
 ---
 
@@ -110,7 +110,7 @@ Output: (B, 13) — 13 depth temperatures (10–1000 m)
 | **Test Samples** | 289 |
 | **Model Parameters** | 300,808 |
 
-### 7-Channel Spatial CNN (real patches, 3.2% CMEMS coverage)
+### 7-Channel Spatial CNN (real patches, ~10% CMEMS coverage)
 
 | Metric | Value |
 |--------|-------|
@@ -121,7 +121,7 @@ Output: (B, 13) — 13 depth temperatures (10–1000 m)
 | **Model Parameters** | 1,310,421 |
 | **Real Data Fraction** | 3.3% of training patches |
 
-**Note:** Trained on real 0.25° grid patches (96/2,992 profiles with CMEMS SSS/currents + satellite SST/SSH/winds). Performance improved from the synthetic-patch baseline (RMSE 1.57 -> 1.51, R2 0.55 -> 0.62) but remains worse than the 1D production model. The spatial architecture needs substantially more real gridded data to realize its potential.
+**Note:** Trained on real 0.25° grid patches (302/2,992 profiles with CMEMS SSS/currents + satellite SST/SSH/winds). Performance improved from the synthetic-patch baseline but remains worse than the 1D production model. The spatial architecture needs substantially more real gridded data to realize its potential.
 
 ### RMSE by Depth (1D model)
 
@@ -250,11 +250,11 @@ oceanembed/
 | Variable | Source | Coverage | Status |
 |----------|--------|----------|--------|
 | **SST** | NOAA OISST v2.1 | 98.7% | ✅ Used |
-| **SSS** | CMEMS GLORYS12V1 + WOA18 | 3.2% CMEMS | 🔄 Partial (96/2,992 profiles) |
+| **SSS** | CMEMS GLORYS12V1 + WOA18 | ~10% CMEMS | 🔄 Partial (284/2,992 profiles) |
 | **SSH** | NESDIS Satellite Altimetry | 100% | ✅ Used |
 | **Wind** | ERA5 Reanalysis | 99.7% | ✅ Used |
-| **Currents** | CMEMS GLORYS12V1 + interpolated | 3.2% CMEMS | 🔄 Partial (96/2,992 profiles) |
-| **GLORYS** | CMEMS GLORYS12V1 (depth profiles) | 3.2% | 🔄 Partial (96/2,992 profiles) |
+| **Currents** | CMEMS GLORYS12V1 + interpolated | ~10% CMEMS | 🔄 Partial (284/2,992 profiles) |
+| **GLORYS** | CMEMS GLORYS12V1 (depth profiles) | ~10% | 🔄 Partial (302/2,992 profiles) |
 
 ---
 
@@ -262,7 +262,7 @@ oceanembed/
 
 **Copernicus Marine Service (CMEMS)** is the primary real data source for SSS, currents, and GLORYS reanalysis. The `copernicusmarine` Python toolbox is authenticated and working.
 
-**Current progress:** 96/2,992 profiles (3.2%) fetched from CMEMS. Each query takes ~60 seconds (SSS + currents + GLORYS temperature profile in one API call).
+**Current progress:** 302/2,992 profiles (~10.1%) fetched from CMEMS via stratified representative sampling. Each query takes ~60 seconds. Full coverage would require ~48 hours of continuous API calls.
 
 **To continue extraction:**
 ```bash
@@ -277,7 +277,7 @@ See `docs/COPERNICUS_SETUP.md` for authentication instructions.
 
 ## Known Limitations
 
-1. **SSS/Currents Coverage:** CMEMS integration covers 3.2% of profiles (96/2,992) with real data. Full extraction requires ~48 hours of API calls at ~60s per profile.
+1. **SSS/Currents Coverage:** CMEMS integration covers ~10% of profiles (284/2,992) with real data, achieved via stratified representative sampling. Full extraction requires ~48 hours of continuous API calls at ~60s per profile.
 2. **Spatial CNN:** Currently trained on synthetic grid patches; real 0.25° gridded CMEMS data would improve performance.
 3. **Thermocline Accuracy:** Higher RMSE at 75-200m due to natural variability in the thermocline region.
 

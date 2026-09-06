@@ -75,3 +75,4 @@ data/reports/depthwise_rmse.png
 # config.py              ← KEEP
 # requirements.txt       ← KEEP
 # README.md              ← KEEP
+cmems_mod_glo_phy_my_0.083deg_P1D-m_*.nc.*
