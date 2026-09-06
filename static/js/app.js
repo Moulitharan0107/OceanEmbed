@@ -32,6 +32,24 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
 }).addTo(map);
 
+// Dotted boundary rectangle for trained domain
+L.rectangle([[0, 40], [25, 100]], {
+    color: '#00e5ff',
+    weight: 2,
+    fill: false,
+    dashArray: '6,6'
+}).addTo(map);
+
+// Label for the trained region
+L.marker([25.8, 70], {
+    icon: L.divIcon({
+        className: '',
+        html: '<div style="background: rgba(10,22,40,0.85); border: 1px solid rgba(0,229,255,0.3); border-radius: 4px; padding: 3px 8px; font-size: 11px; color: #00e5ff; white-space: nowrap; font-family: Inter, sans-serif;">Model Trained Region: North Indian Ocean (0°–25°N, 40°–100°E)</div>',
+        iconSize: [0, 0],
+        iconAnchor: [-8, 12]
+    })
+}).addTo(map);
+
 // Markers layer
 let currentMarker = null;
 let profileData = null;
