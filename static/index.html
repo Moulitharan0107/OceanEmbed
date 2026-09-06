@@ -159,6 +159,27 @@
                 </div>
             </div>
 
+            <!-- Cyclone Case Study -->
+            <div class="card">
+                <div class="card-title"><span class="icon">🌀</span> Cyclone Case Study: Fani (May 2019)</div>
+                <div style="font-size: 0.75em; color: var(--text-muted); margin-bottom: 8px;">
+                    Historical case study — SST field from NOAA OISST v2.1<br>
+                    Demonstrates why subsurface temperature monitoring matters for cyclone disaster analysis
+                </div>
+                <div class="input-row">
+                    <button class="primary" id="cycloneBefore" onclick="showCycloneSST('before')" style="flex:1; font-size: 0.8em;">
+                        Before (Apr 25)
+                    </button>
+                    <button class="primary" id="cycloneDuring" onclick="showCycloneSST('during')" style="flex:1; font-size: 0.8em;">
+                        During (May 1)
+                    </button>
+                </div>
+                <button style="width:100%; margin-top:6px; font-size: 0.75em; background: transparent; border: 1px solid #555; color: #aaa; padding: 6px; cursor: pointer; border-radius: 4px;" onclick="clearCycloneOverlay()">
+                    Clear SST Overlay
+                </button>
+                <div id="cycloneLabel" style="font-size: 0.7em; color: var(--text-muted); margin-top: 6px; text-align: center;"></div>
+            </div>
+
             <!-- Explainability Panel -->
             <div class="card">
                 <div class="card-title"><span class="icon">🔍</span> Feature Influence (Explainability)</div>

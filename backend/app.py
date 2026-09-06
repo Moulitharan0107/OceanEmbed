@@ -372,6 +372,57 @@ async def get_depth_levels():
     return {"depth_levels": config.DEPTH_LEVELS, "n_levels": len(config.DEPTH_LEVELS)}
 
 
+@app.get("/api/cyclone-sst")
+async def get_cyclone_sst(
+    phase: str = Query("before", description="'before' or 'during' the cyclone"),
+):
+    """
+    Return SST grid for Cyclone Fani (May 2019) before/during comparison.
+    Before: April 25, 2019 (pre-cyclone warm water)
+    During: May 1, 2019 (peak approach, SST cooling from wind mixing)
+    """
+    import xarray as xr
+    import numpy as np
+    
+    oisst_path = os.path.join(config.DATA_DIR, "raw", "oisst", "sst_2019_Q2.nc")
+    if not os.path.exists(oisst_path):
+        raise HTTPException(status_code=404, detail="OISST Q2 2019 data not found")
+    
+    ds = xr.open_dataset(oisst_path)
+    
+    if phase == "before":
+        sst_slice = ds.sst.sel(time="2019-04-25", method="nearest").values[0]
+        date_label = "April 25, 2019"
+    else:
+        sst_slice = ds.sst.sel(time="2019-05-01", method="nearest").values[0]
+        date_label = "May 1, 2019"
+    
+    lats = ds.latitude.values
+    lons = ds.longitude.values
+    ds.close()
+    
+    # Subsample to North Indian Ocean for lighter transfer
+    lat_mask = (lats >= -5) & (lats <= 25)
+    lon_mask = (lons >= 60) & (lons <= 100)
+    sst_sub = sst_slice[np.ix_(lat_mask, lon_mask)]
+    lats_sub = lats[lat_mask]
+    lons_sub = lons[lon_mask]
+    
+    # Convert NaN to null for JSON
+    sst_list = np.where(np.isnan(sst_sub), None, np.round(sst_sub.astype(float), 2)).tolist()
+    
+    return {
+        "cyclone": "Fani",
+        "phase": phase,
+        "date": date_label,
+        "description": f"Cyclone Fani {phase} ({date_label}) — SST from NOAA OISST v2.1",
+        "lats": [round(float(x), 2) for x in lats_sub[::4]],  # subsample for transfer
+        "lons": [round(float(x), 2) for x in lons_sub[::4]],
+        "sst": [row[::4] for row in sst_list[::4]],  # 4x subsample
+        "colorbar": {"min": 24, "max": 31, "unit": "°C"},
+    }
+
+
 # Serve static frontend files
 app.mount("/static", StaticFiles(directory=os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "static"
