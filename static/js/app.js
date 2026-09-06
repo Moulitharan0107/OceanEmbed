@@ -284,10 +284,6 @@ function updateLocationInfo(data) {
     const sst = features.sst ? features.sst.toFixed(1) : 'N/A';
     document.getElementById('infoSST').textContent = `${sst}°C`;
     
-    const sss = features.sss ? features.sss.toFixed(1) : 'N/A';
-    const sssEl = document.getElementById('infoSSS');
-    if (sssEl) sssEl.textContent = `${sss} PSU`;
-    
     const conf = data.confidence_score;
     const confEl = document.getElementById('infoConfidence');
     const badge = conf > 0.7 ? 'high' : conf > 0.4 ? 'medium' : 'low';
@@ -396,6 +392,52 @@ function drawProfileChart(data) {
         responsive: true,
         displayModeBar: false,
     });
+    
+    // Render depth comparison table
+    renderDepthComparisonTable(data);
+}
+
+function renderDepthComparisonTable(data) {
+    const depths = data.depth_levels;
+    const predicted = data.predicted_profile;
+    const argoProfile = (data.nearest_argo && data.nearest_argo.temperature_profile) || {};
+    
+    // Find or create the table container below the chart
+    let container = document.getElementById('depthComparisonTable');
+    if (!container) {
+        const chartCard = document.getElementById('profileChart').parentElement;
+        container = document.createElement('div');
+        container.id = 'depthComparisonTable';
+        container.style.cssText = 'margin-top: 12px; padding: 0 4px;';
+        chartCard.appendChild(container);
+    }
+    
+    let html = '<div style="font-size: 0.75em; color: #9e9e9e; margin-bottom: 6px;">' +
+        '<strong>Depth-by-Depth Comparison</strong> (where real Argo data is available)' +
+        '</div>';
+    html += '<table style="width:100%; border-collapse: collapse; font-size: 0.78em;">';
+    html += '<thead><tr style="border-bottom: 1px solid rgba(255,255,255,0.15);">';
+    html += '<th style="text-align:left; padding: 4px 6px; color: #9e9e9e;">Depth</th>';
+    html += '<th style="text-align:right; padding: 4px 6px; color: #FF9800;">Argo (Measured)</th>';
+    html += '<th style="text-align:right; padding: 4px 6px; color: #00BCD4;">Predicted</th>';
+    html += '</tr></thead><tbody>';
+    
+    for (let i = 0; i < depths.length; i++) {
+        const d = depths[i];
+        const p = predicted[i] !== undefined ? predicted[i].toFixed(2) + '°C' : '—';
+        const a = argoProfile[d] !== undefined ? argoProfile[d].toFixed(2) + '°C' : (argoProfile[String(d)] !== undefined ? argoProfile[String(d)].toFixed(2) + '°C' : '—');
+        const bg = i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent';
+        const derived = i < 2 ? ' style="color: #4CAF50; font-style: italic;"' : '';
+        html += `<tr style="background: ${bg}; border-bottom: 1px solid rgba(255,255,255,0.05);">`;
+        html += `<td style="padding: 3px 6px; color: #e0e0e0;">${d}m${i < 2 ? ' *' : ''}</td>`;
+        html += `<td style="padding: 3px 6px; text-align: right; color: ${a === '—' ? '#666' : '#FF9800'};">${a}</td>`;
+        html += `<td style="padding: 3px 6px; text-align: right; color: #00BCD4;"${derived}>${p}</td>`;
+        html += '</tr>';
+    }
+    
+    html += '</tbody></table>';
+    html += '<div style="font-size: 0.68em; color: #666; margin-top: 4px;">* 0m and 5m are SST-anchored / interpolated, not independently model-predicted</div>';
+    container.innerHTML = html;
 }
 
 // ============================================================
@@ -409,7 +451,6 @@ async function updateExplainability(data) {
     const featureMeta = {
         'sst': { label: 'SST', color: '#f44336', desc: 'Sea Surface Temperature' },
         'ssh': { label: 'SSH', color: '#2196F3', desc: 'Sea Surface Height Anomaly' },
-        'sss': { label: 'SSS', color: '#4CAF50', desc: 'Sea Surface Salinity' },
         'u10': { label: 'u10 (Wind)', color: '#FF9800', desc: 'Zonal wind component' },
         'v10': { label: 'v10 (Wind)', color: '#FF9800', desc: 'Meridional wind component' },
     };
@@ -457,7 +498,6 @@ async function updateExplainability(data) {
     html += `
         <div style="margin-top: 10px; font-size: 0.75em; color: var(--text-muted); line-height: 1.4;">
             <strong>Inputs:</strong> Latitude, Longitude, SST, SSH, U10, V10<br>
-            <strong>Note:</strong> SSS integrated via CMEMS at limited coverage (9.5% real); production model uses 6 validated high-coverage features (SST, SSH, winds) for best accuracy.<br>
             <strong>Method:</strong> Gradient-based feature attribution on trained model.
         </div>
     `;
@@ -499,7 +539,7 @@ function updateDataModeBadge(data) {
             <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 4px;">
                 SST: ${features.sst?.toFixed(1)}°C | SSH: ${features.ssh?.toFixed(4)}m | 
                 U10: ${features.u10?.toFixed(2)}m/s | V10: ${features.v10?.toFixed(2)}m/s<br>
-                SSS: Available (CMEMS, 9.5% real) — not used in production model
+
             </div>
         `;
     }

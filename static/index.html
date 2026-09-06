@@ -111,7 +111,7 @@
                             <div class="input-group"></div>
                         </div>
                         <div style="font-size: 0.72em; color: var(--text-muted); margin-top: 4px;">
-                            ℹ️ 7 Surface Inputs: SST, SSS (WOA18 climatology), SSH, Winds (ERA5), Currents (interpolated).
+                            ℹ️ 6 Surface Inputs: SST, SSH, Winds (u10, v10), Latitude, Longitude.
                             All auto-estimated from nearest cached data unless overridden above.
                         </div>
                     </div>
@@ -137,10 +137,7 @@
                         <div class="label">SST Input</div>
                         <div class="value" id="infoSST">—</div>
                     </div>
-                    <div class="location-item">
-                        <div class="label">SSS</div>
-                        <div class="value" id="infoSSS">—</div>
-                    </div>
+
                     <div class="location-item">
                         <div class="label">Confidence</div>
                         <div class="value" id="infoConfidence">—</div>
@@ -153,7 +150,6 @@
                 <div class="card-title"><span class="icon">📈</span> Temperature vs Depth Profile</div>
                 <div class="chart-container" id="profileChart">
                     <div class="empty-state">
-                        <div class="icon">🌊</div>
                         <p>Click a point on the map to see<br>the predicted temperature profile</p>
                     </div>
                 </div>
@@ -171,6 +167,6 @@
         </div>
     </div>
 
-    <script src="/static/js/app.js?v=14"></script>
+    <script src="/static/js/app.js?v=15"></script>
 </body>
 </html>
