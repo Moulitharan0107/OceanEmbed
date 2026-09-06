@@ -108,6 +108,7 @@ class OceanEmbedTrainer:
             batch_size=batch_size,
             shuffle=True,
             num_workers=0,
+            drop_last=True,
         )
         
         val_loader = DataLoader(
@@ -352,7 +353,7 @@ class OceanEmbedTrainer:
         print(f"\n{'Depth (m)':>10} {'RMSE (°C)':>12} {'R²':>10}")
         print("-" * 35)
         
-        for j, depth in enumerate(config.DEPTH_LEVELS):
+        for j, depth in enumerate(config.MODEL_DEPTH_LEVELS):
             rmse_j = np.sqrt(np.mean((preds[:, j] - trues[:, j]) ** 2))
             ss_res_j = np.sum((trues[:, j] - preds[:, j]) ** 2)
             ss_tot_j = np.sum((trues[:, j] - np.mean(trues[:, j])) ** 2)

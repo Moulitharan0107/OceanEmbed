@@ -11,21 +11,17 @@ REGION = {
     "lon_max": 120.0,
 }
 
-# Depth levels (meters) - model outputs from checkpoint
-# The trained checkpoint has 33 depth levels (0-2000m)
+# Depth levels (meters) - 13 levels from 10m to 1000m
 # 0m and 5m are SST-anchored DERIVED values for display
-# The model's actual output dimensions match the checkpoint
 MODEL_DEPTH_LEVELS = [
-    0, 10, 20, 30, 40, 50, 75, 100, 125, 150, 175, 200, 250, 300,
-    350, 400, 450, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300,
-    1400, 1500, 1600, 1700, 1800, 1900, 2000
+    10, 20, 30, 50, 75, 100, 125, 150, 200, 300, 500, 700, 1000
 ]
 
-# Display levels: model outputs + 5m interpolated
-DEPTH_LEVELS = [5] + MODEL_DEPTH_LEVELS
+# Display levels: 0m (SST) + 5m (interpolated) + model outputs
+DEPTH_LEVELS = [0, 5] + MODEL_DEPTH_LEVELS
 
-NUM_DEPTH_LEVELS = len(MODEL_DEPTH_LEVELS)  # Model outputs 33 levels
-NUM_DISPLAY_LEVELS = len(DEPTH_LEVELS)  # Display shows 34 levels (with 5m)
+NUM_DEPTH_LEVELS = len(MODEL_DEPTH_LEVELS)  # Model outputs 13 levels
+NUM_DISPLAY_LEVELS = len(DEPTH_LEVELS)  # Display shows 15 levels
 
 # Surface features (input channels)
 # NOTE: SSS was dropped from the real-data model because SMOS 403 Forbidden.
