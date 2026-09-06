@@ -45,7 +45,7 @@ L.rectangle([[0, 40], [25, 100]], {
 L.marker([25.8, 70], {
     icon: L.divIcon({
         className: '',
-        html: '<div style="background: rgba(10,22,40,0.92); border: 1px solid rgba(0,229,255,0.4); border-radius: 4px; padding: 4px 10px; font-size: 11px; color: #ffffff; white-space: nowrap; font-family: Inter, sans-serif; letter-spacing: 0.3px;">Model Trained Region: North Indian Ocean (0°–25°N, 40°–100°E)</div>',
+        html: '<div style="background: rgba(10,22,40,0.92); border: 1px solid rgba(0,229,255,0.4); border-radius: 4px; padding: 4px 10px; font-size: 11px; color: #ffffff; white-space: nowrap; font-family: Inter, sans-serif; letter-spacing: 0.3px;">Model Trained: Indian Ocean (-30°–27°N, 32°–120°E) | UI Scoped to North Indian Ocean (0°–25°N, 40°–100°E)</div>',
         iconSize: [0, 0],
         iconAnchor: [-8, 12]
     })
