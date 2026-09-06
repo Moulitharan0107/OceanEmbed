@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OceanEmbed — Subsurface Temperature Reconstruction</title>
+    <title>OceanEmbed — Interactive INCOIS Map Dashboard</title>
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -37,8 +37,9 @@
         <!-- Map Panel -->
         <div class="map-panel">
             <div class="map-overlay">
-                <strong>Indian Ocean Domain</strong><br>
-                Click any point to predict subsurface temperature
+                <strong>Interactive INCOIS Map Dashboard</strong><br>
+                For oceanographers & disaster management teams<br>
+                Click any point to predict subsurface temperature (10-1000m)
             </div>
             <div id="map"></div>
             <div class="map-click-hint" id="mapHint">📍 Click on the ocean to start</div>
@@ -53,11 +54,11 @@
                 <div class="input-row">
                     <div class="input-group">
                         <label>Latitude</label>
-                        <input type="number" id="inputLat" min="-30" max="30" step="0.1" placeholder="e.g. 10.5">
+                        <input type="number" id="inputLat" min="-30" max="30" step="0.1" placeholder="e.g. 15.0">
                     </div>
                     <div class="input-group">
                         <label>Longitude</label>
-                        <input type="number" id="inputLon" min="30" max="120" step="0.1" placeholder="e.g. 75.3">
+                        <input type="number" id="inputLon" min="30" max="120" step="0.1" placeholder="e.g. 80.0">
                     </div>
                 </div>
                 

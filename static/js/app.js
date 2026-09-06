@@ -8,7 +8,7 @@
 // ============================================================
 
 const map = L.map('map', {
-    center: [5, 65],   // Center of Indian Ocean
+    center: [12, 72],   // North Indian Ocean (Bay of Bengal / Arabian Sea)
     zoom: 4,
     minZoom: 3,
     maxZoom: 12,
@@ -181,7 +181,9 @@ function updateMapMarker(lat, lon, data) {
     }).addTo(map);
     
     // Popup with key info
-    const sst = data.predicted_profile[0].toFixed(1);
+    const sst = data.predicted_profile[0].toFixed(1);  // 0m = SST
+    const t5m = data.predicted_profile[1].toFixed(1);  // 5m = derived
+    const shallow = data.predicted_profile[2].toFixed(1);  // 10m = model
     const deep = data.predicted_profile[data.predicted_profile.length - 1].toFixed(1);
     
     currentMarker.bindPopup(`
@@ -189,7 +191,9 @@ function updateMapMarker(lat, lon, data) {
             <strong style="color: #00BCD4;">🌊 OceanEmbed Prediction</strong><br>
             <b>Lat:</b> ${lat.toFixed(2)}° | <b>Lon:</b> ${lon.toFixed(2)}°<br>
             <b>Date:</b> ${data.date}<br>
-            <b>Surface Temp:</b> ${sst}°C → <b>Deep Temp (2000m):</b> ${deep}°C<br>
+            <b>SST (0m):</b> ${sst}°C (measured)<br>
+            <b>5m:</b> ${t5m}°C (interpolated)<br>
+            <b>10m:</b> ${shallow}°C → <b>1000m:</b> ${deep}°C<br>
             <b>Confidence:</b> ${(conf * 100).toFixed(0)}%
         </div>
     `).openPopup();
@@ -250,12 +254,12 @@ function drawProfileChart(data) {
         });
     }
     
-    // Uncertainty band
-    const upper = temps.map((t, i) => t + uncert[i]);
-    const lower = temps.map((t, i) => t - uncert[i]);
+    // Uncertainty band (model-predicted only, 10m-1000m)
+    const upper = modelTemps.map((t, i) => t + modelUncert[i]);
+    const lower = modelTemps.map((t, i) => t - modelUncert[i]);
     traces.push({
         x: [...upper, ...lower.reverse()],
-        y: [...depths, ...depths.slice().reverse()],
+        y: [...modelDepths, ...modelDepths.slice().reverse()],
         fill: 'toself',
         fillcolor: 'rgba(0, 188, 212, 0.15)',
         line: { color: 'transparent' },
@@ -264,15 +268,33 @@ function drawProfileChart(data) {
         hoverinfo: 'skip',
     });
     
-    // Main profile line
+    // Separate derived (0m, 5m) from model-predicted (10m+)
+    const derivedTemps = temps.slice(0, 2);
+    const derivedDepths = depths.slice(0, 2);
+    const modelTemps = temps.slice(2);
+    const modelDepths = depths.slice(2);
+    const modelUncert = uncert.slice(2);
+    
+    // Model-predicted line (10m-1000m)
     traces.push({
-        x: temps,
-        y: depths,
+        x: modelTemps,
+        y: modelDepths,
         type: 'scatter',
         mode: 'lines+markers',
-        name: 'Predicted',
+        name: 'Predicted (10-1000m)',
         line: { color: '#00BCD4', width: 2.5 },
         marker: { size: 4, color: '#00BCD4' },
+    });
+    
+    // Derived values (0m, 5m) with different style
+    traces.push({
+        x: derivedTemps,
+        y: derivedDepths,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'SST-anchored (0-5m)',
+        line: { color: '#4CAF50', width: 2, dash: 'dash' },
+        marker: { size: 6, color: '#4CAF50', symbol: 'circle' },
     });
     
     const layout = {

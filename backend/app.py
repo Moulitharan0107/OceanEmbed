@@ -80,7 +80,7 @@ async def startup():
                 "features_used": ["latitude", "longitude", "sst", "ssh", "u10", "v10"],
                 "sss_note": "SSS unavailable (SMOS 403 Forbidden)",
                 "date_range": "2019-2024",
-                "region": "Indian Ocean (30E-120E, 30S-30N)",
+                "region": "North Indian Ocean (primary), Indian Ocean (full model coverage)",
             }
             print("[STARTUP] Loaded REAL trained model")
         except Exception as e:
@@ -266,6 +266,19 @@ async def predict(req: PredictionRequest):
     profile = np.clip(profile, -2, 35)
     uncertainty = np.abs(uncertainty)
     
+    # Add derived 0m and 5m values (SST-anchored)
+    # T_0m = SST (direct pass-through, not model-predicted)
+    # T_5m = linear interpolation between SST (0m) and model's T_10m
+    sst_value = float(features[2])
+    t_0m = sst_value
+    t_10m = float(profile[0])  # First model output is 10m
+    t_5m = (t_0m + t_10m) / 2.0  # Linear interpolation at midpoint
+    
+    # Build 15-level profile: [0m, 5m] + model's 13 levels [10m-1000m]
+    full_profile = [t_0m, t_5m] + profile.tolist()
+    full_uncertainty = [0.0, 0.0] + uncertainty.tolist()  # No uncertainty for derived values
+    full_depths = [0, 5] + config.MODEL_DEPTH_LEVELS
+    
     # Confidence score
     temp_range = float(np.max(profile) - np.min(profile)) + 1e-6
     mean_uncert = float(np.mean(uncertainty))
@@ -278,9 +291,9 @@ async def predict(req: PredictionRequest):
         latitude=req.latitude,
         longitude=req.longitude,
         date=req.date,
-        predicted_profile=profile.tolist(),
-        uncertainty=uncertainty.tolist(),
-        depth_levels=config.DEPTH_LEVELS,
+        predicted_profile=full_profile,
+        uncertainty=full_uncertainty,
+        depth_levels=full_depths,
         features_used={
             "sst": round(float(features[2]), 2),
             "ssh": round(float(features[3]), 4),

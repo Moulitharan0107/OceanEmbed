@@ -4,8 +4,8 @@ Deep learning model for predicting subsurface ocean temperature profiles
 from surface satellite observations.
 
 Architecture: Multi-scale 1D CNN with residual connections.
-The model learns to map a 5-dimensional surface feature vector
-(SST, SSH, SSS, u10, v10) to a 31-level vertical temperature profile (0-2000m).
+The model learns to map a 6-dimensional surface feature vector
+(lat, lon, SST, SSH, u10, v10) to a 13-level vertical temperature profile (10-1000m).
 """
 
 import torch
@@ -24,8 +24,8 @@ class OceanEmbedModel(nn.Module):
     """
     Multi-scale 1D CNN for ocean temperature profile reconstruction.
     
-    Input: (batch_size, num_features=5) - surface observations
-    Output: (batch_size, num_depth_levels=31) - temperature profile 0-2000m
+    Input: (batch_size, num_features=6) - surface observations
+    Output: (batch_size, num_depth_levels=13) - temperature profile 10-1000m
     
     The architecture uses:
     1. Feature embedding layer to project sparse surface inputs to higher dims
