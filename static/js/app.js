@@ -267,6 +267,13 @@ function drawProfileChart(data) {
         });
     }
     
+    // Separate derived (0m, 5m) from model-predicted (10m+)
+    const derivedTemps = temps.slice(0, 2);
+    const derivedDepths = depths.slice(0, 2);
+    const modelTemps = temps.slice(2);
+    const modelDepths = depths.slice(2);
+    const modelUncert = uncert.slice(2);
+    
     // Uncertainty band (model-predicted only, 10m-1000m)
     const upper = modelTemps.map((t, i) => t + modelUncert[i]);
     const lower = modelTemps.map((t, i) => t - modelUncert[i]);
@@ -280,13 +287,6 @@ function drawProfileChart(data) {
         showlegend: true,
         hoverinfo: 'skip',
     });
-    
-    // Separate derived (0m, 5m) from model-predicted (10m+)
-    const derivedTemps = temps.slice(0, 2);
-    const derivedDepths = depths.slice(0, 2);
-    const modelTemps = temps.slice(2);
-    const modelDepths = depths.slice(2);
-    const modelUncert = uncert.slice(2);
     
     // Model-predicted line (10m-1000m)
     traces.push({
