@@ -7,39 +7,30 @@
 //  Map Setup
 // ============================================================
 
-const trainedBounds = [[-3, 37], [28, 103]];
+// Exact trained domain: North Indian Ocean 0-25N, 40-100E
+const trainedDomain = L.latLngBounds([[0, 40], [25, 100]]);
+const paddedBounds = trainedDomain.pad(0.05);
+
 const map = L.map('map', {
-    center: [12, 72],
-    zoom: 4,
-    minZoom: 4,
+    center: [12.5, 70],
+    zoom: 5,
+    minZoom: 5,
     maxZoom: 12,
-    maxBounds: trainedBounds,
+    maxBounds: paddedBounds,
     maxBoundsViscosity: 1.0,
 });
-map.fitBounds(trainedBounds);
+map.fitBounds(paddedBounds);
 
-// Enforce region lock: prevent panning outside bounds
+// Enforce region lock
 map.on('drag', function() {
-    map.panInsideBounds(trainedBounds, { animate: false });
+    map.panInsideBounds(paddedBounds, { animate: false });
 });
 
-// Dark theme tiles (CARTO dark_all, free, no API key)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+// Dark theme tiles — CARTO raster dark_all (free, no API key)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png', {
     attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
     subdomains: 'abcd',
     maxZoom: 19,
-}).addTo(map);
-
-// Model trained region: North Indian Ocean (0-25N, 40-100E)
-L.rectangle([[0, 40], [25, 100]], {
-    color: '#00bcd4', weight: 2, fill: false, dashArray: '4,4'
-}).addTo(map);
-L.marker([25.3, 70], {
-    icon: L.divIcon({
-        className: '',
-        html: '<div style="font-size:11px;color:#00bcd4;white-space:nowrap;text-shadow:1px 1px 2px #000">Model trained region: North Indian Ocean (0-25&deg;N, 40-100&deg;E)</div>',
-        iconAnchor: [0, 0]
-    })
 }).addTo(map);
 
 // Markers layer
