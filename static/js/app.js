@@ -457,7 +457,7 @@ async function updateExplainability(data) {
     html += `
         <div style="margin-top: 10px; font-size: 0.75em; color: var(--text-muted); line-height: 1.4;">
             <strong>Inputs:</strong> Latitude, Longitude, SST, SSH, U10, V10<br>
-            <strong>Note:</strong> SSS unavailable (SMOS 403 Forbidden)<br>
+            <strong>Note:</strong> SSS integrated via CMEMS at limited coverage (9.5% real); production model uses 6 validated high-coverage features (SST, SSH, winds) for best accuracy.<br>
             <strong>Method:</strong> Gradient-based feature attribution on trained model.
         </div>
     `;
@@ -499,7 +499,7 @@ function updateDataModeBadge(data) {
             <div style="font-size: 0.75em; color: var(--text-muted); margin-top: 4px;">
                 SST: ${features.sst?.toFixed(1)}°C | SSH: ${features.ssh?.toFixed(4)}m | 
                 U10: ${features.u10?.toFixed(2)}m/s | V10: ${features.v10?.toFixed(2)}m/s<br>
-                SSS: NOT USED (SMOS unavailable)
+                SSS: Available (CMEMS, 9.5% real) — not used in production model
             </div>
         `;
     }
