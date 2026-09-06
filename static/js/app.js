@@ -9,20 +9,24 @@
 
 // Exact trained domain: North Indian Ocean 0-25N, 40-100E
 const bounds = L.latLngBounds([[0, 40], [25, 100]]);
+const paddedBounds = bounds.pad(0.05);
 
-// Create map — free zoom and pan, no restrictions
+// Create map — zoom IN freely, zoom OUT capped at region boundary
 const map = L.map('map', {
     center: [12.5, 70],
     zoom: 5,
-    minZoom: 2,
+    minZoom: 2,  // will be overridden after fitBounds
     maxZoom: 19,
     zoomControl: false,
     worldCopyJump: true,
-    scrollWheelZoom: true
+    scrollWheelZoom: true,
+    maxBoundsViscosity: 1.0
 });
 
-// Fit to the trained region on load (initial view, not a lock)
-map.fitBounds(bounds);
+// Fit to padded bounds and compute minZoom from that
+map.fitBounds(paddedBounds);
+const fitZoom = map.getZoom();
+map.setMinZoom(fitZoom);
 
 // Add zoom control to top-right
 L.control.zoom({ position: 'topright' }).addTo(map);
@@ -33,7 +37,12 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
 }).addTo(map);
 
-console.log('Map initialized — free zoom and pan enabled');
+// Prevent panning outside the region
+map.on('drag', function() {
+    map.panInsideBounds(paddedBounds, { animate: false });
+});
+
+console.log('Map initialized — zoom in freely, zoom out capped at region boundary');
 
 // Dotted boundary rectangle for trained domain — dark navy for high contrast
 L.rectangle([[0, 40], [25, 100]], {

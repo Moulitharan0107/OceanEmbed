@@ -75,6 +75,7 @@ def init_surface_lookup():
             _ocean_mask_lats = ds0.latitude.values.copy()
             _ocean_mask_lons = ds0.longitude.values.copy()
             _ocean_mask = mask
+            _land_mask = ~mask  # True where land
             n_ocean = int(np.sum(mask))
             n_total = mask.size
             print(f"  [OCEAN MASK] Built from OISST: {n_ocean}/{n_total} ocean cells ({100*n_ocean/n_total:.1f}%)")
@@ -90,9 +91,12 @@ def init_surface_lookup():
 def is_ocean(lat: float, lon: float) -> bool:
     """Check if a lat/lon point is on ocean using the OISST-derived mask.
 
-    Returns True if the nearest grid cell has valid (non-NaN) SST data,
-    meaning it's over ocean. Returns False (land) if the mask is unavailable
-    or the point falls on a NaN cell.
+    The OISST grid is 0.25 deg (~28 km). At this resolution, a coastal city
+    like Chennai can snap to an ocean grid cell even though the city itself is
+    on land. To handle this, we check a neighborhood of cells around the point:
+    if ANY cell within 0.3 deg (~33 km) is land, the point is considered
+    coastal/land and rejected. This correctly rejects Chennai, Dhanushkodi,
+    etc. while allowing open-ocean points.
     """
     if _ocean_mask is None or _ocean_mask_lats is None:
         # No mask available — be permissive (don't block predictions)
@@ -106,7 +110,25 @@ def is_ocean(lat: float, lon: float) -> bool:
     if lon_idx < 0 or lon_idx >= _ocean_mask.shape[1]:
         return False
 
-    return bool(_ocean_mask[lat_idx, lon_idx])
+    # Check if the exact nearest cell is land — quick reject
+    if not _ocean_mask[lat_idx, lon_idx]:
+        return False
+
+    # Check immediate neighbors ( +/-1 cell = +/-0.25 deg / ~28 km ).
+    # If ANY adjacent cell is land, the point is near coast -> reject.
+    # This catches cities like Chennai (nearest cell is ocean but the
+    # next cell west is land at 80.12 degE).
+    for di in range(-1, 2):
+        for dj in range(-1, 2):
+            ni = lat_idx + di
+            nj = lon_idx + dj
+            if 0 <= ni < _ocean_mask.shape[0] and 0 <= nj < _ocean_mask.shape[1]:
+                if not _ocean_mask[ni, nj]:
+                    # Found a land cell nearby -> this point is coastal/land
+                    return False
+
+    # All cells in the 3x3 neighborhood are ocean -> truly open water
+    return True
 
 
 def _lookup_sst(lat: float, lon: float, date: datetime) -> Optional[float]:
