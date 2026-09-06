@@ -30,14 +30,14 @@ Built for **INCOIS (Indian National Centre for Ocean Information Services)**, su
 | # | Variable | Description | Source | Status |
 |---|----------|-------------|--------|--------|
 | 1 | **SST** | Sea Surface Temperature (°C) | NOAA OISST v2.1 | ✅ Real (98.7%) |
-| 2 | **SSS** | Sea Surface Salinity (PSU) | WOA18 Climatology | ✅ Climatological fallback |
+| 2 | **SSS** | Sea Surface Salinity (PSU) | CMEMS GLORYS12V1 (1%) + WOA18 climatology | 🔄 Partial (29 CMEMS / 2,963 fallback) |
 | 3 | **SSH** | Sea Surface Height Anomaly (m) | NESDIS Satellite Altimetry | ✅ Real (100%) |
 | 4 | **u10** | Zonal Wind Speed at 10m (m/s) | ERA5 Reanalysis | ✅ Real (99.7%) |
 | 5 | **v10** | Meridional Wind Speed at 10m (m/s) | ERA5 Reanalysis | ✅ Real (99.7%) |
-| 6 | **current_u** | Ocean Current u-component (m/s) | Nearest-neighbor interpolated | ✅ Interpolated (100%) |
-| 7 | **current_v** | Ocean Current v-component (m/s) | Nearest-neighbor interpolated | ✅ Interpolated (100%) |
+| 6 | **current_u** | Ocean Current u-component (m/s) | CMEMS GLORYS12V1 (1%) + interpolated | 🔄 Partial (29 CMEMS / 2,963 fallback) |
+| 7 | **current_v** | Ocean Current v-component (m/s) | CMEMS GLORYS12V1 (1%) + interpolated | 🔄 Partial (29 CMEMS / 2,963 fallback) |
 
-**Note:** SSS uses WOA18 climatology because SMOS ERDDAP returns HTTP 403. Currents use nearest-neighbor interpolation from cached HYCOM data (full HYCOM extraction blocked by rate limits). All fallback values are clearly labeled in API responses and code.
+**Note:** SSS and currents are sourced from CMEMS GLORYS12V1 where available (29 profiles fetched so far, ~60s per profile query). Remaining profiles use WOA18 climatology (SSS) and nearest-neighbor interpolation (currents) as fallback. Each row is labeled with its source (`sss_source` and `currents_source` columns) for transparency. Full CMEMS extraction would require ~50 hours of API calls.
 
 ---
 
@@ -249,21 +249,36 @@ oceanembed/
 | Variable | Source | Coverage | Status |
 |----------|--------|----------|--------|
 | **SST** | NOAA OISST v2.1 | 98.7% | ✅ Used |
-| **SSS** | WOA18 Climatology | 100% | ✅ Used (climatological) |
+| **SSS** | CMEMS GLORYS12V1 + WOA18 | 1.0% CMEMS | 🔄 Growing (29/2,992 profiles) |
 | **SSH** | NESDIS Satellite Altimetry | 100% | ✅ Used |
 | **Wind** | ERA5 Reanalysis | 99.7% | ✅ Used |
-| **Currents** | Nearest-neighbor interpolated | 100% | ✅ Used (interpolated) |
-| **GLORYS** | Copernicus Marine | 10.1% | 🔄 Partial (301/2,992 profiles) |
+| **Currents** | CMEMS GLORYS12V1 + interpolated | 1.0% CMEMS | 🔄 Growing (29/2,992 profiles) |
+| **GLORYS** | CMEMS GLORYS12V1 (depth profiles) | 1.0% | 🔄 Growing (29/2,992 profiles) |
+
+---
+
+## CMEMS Integration Status
+
+**Copernicus Marine Service (CMEMS)** is the primary real data source for SSS, currents, and GLORYS reanalysis. The `copernicusmarine` Python toolbox is authenticated and working.
+
+**Current progress:** 29/2,992 profiles (1.0%) fetched from CMEMS so far. Each query takes ~60 seconds (SSS + currents + GLORYS temperature profile in one API call). Full extraction at this rate would require ~50 hours of continuous API calls.
+
+**To continue extraction:**
+```bash
+python scripts/fetch_cmems_batch.py --limit 100    # fetch next 100 uncached profiles
+python scripts/fetch_cmems_batch.py --status         # check cache progress
+python scripts/apply_cmems_to_dataset.py              # apply cached data to dataset
+```
+
+See `docs/COPERNICUS_SETUP.md` for authentication instructions.
 
 ---
 
 ## Known Limitations
 
-1. **SSS Source:** Uses WOA18 climatology (not real-time satellite data) because SMOS ERDDAP returns HTTP 403
-2. **Currents Source:** Uses nearest-neighbor interpolation from cached data (full HYCOM extraction blocked by rate limits)
-3. **Spatial CNN:** Currently trained on synthetic grid patches; real 0.25° gridded CMEMS data would improve performance
-4. **GLORYS Extraction:** Partially available (301/2,992 profiles); full extraction requires ~26 sessions at 30 minutes each
-5. **Thermocline Accuracy:** Higher RMSE at 75-200m due to natural variability in the thermocline region
+1. **SSS/Currents Coverage:** CMEMS integration started but only 1.0% of profiles have real data (29/2,992). Full extraction requires ~50 hours of API calls at ~60s per profile.
+2. **Spatial CNN:** Currently trained on synthetic grid patches; real 0.25° gridded CMEMS data would improve performance.
+3. **Thermocline Accuracy:** Higher RMSE at 75-200m due to natural variability in the thermocline region.
 
 ---
 

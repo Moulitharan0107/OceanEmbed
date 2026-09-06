@@ -36,7 +36,7 @@ desktop.ini
 *.nc
 
 # ============================================
-# LARGE RAW DATA (re-downloadable from ERDDAP)
+# LARGE RAW DATA (re-downloadable from ERDDAP/CMEMS)
 # ============================================
 data/raw/argo/
 data/raw/oisst/
@@ -45,6 +45,15 @@ data/raw/sss/
 data/raw/era5/
 data/raw/surface_cache/
 data/raw/wind/
+data/raw/cmems_cache/
+
+# ============================================
+# CREDENTIALS (never commit)
+# ============================================
+.env
+*.credentials
+~/.copernicusmarine/
+.copernicusmarine-credentials
 
 # ============================================
 # TEMPORARY / GENERATED FILES

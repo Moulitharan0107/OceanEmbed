@@ -403,7 +403,10 @@ class OceanEmbedTrainer:
         
         # Normalize to sum to 1
         total = grads.sum() + 1e-10
-        importance = {feat: float(grads[i] / total) for i, feat in enumerate(config.FEATURES)}
+        # Use model's actual input features (may differ from config if overridden)
+        input_dim = grads.shape[0]
+        feat_names = config.FEATURES[:input_dim] if input_dim <= len(config.FEATURES) else [f'feat_{i}' for i in range(input_dim)]
+        importance = {feat: float(grads[i] / total) for i, feat in enumerate(feat_names)}
         
         print(f"\nFeature Importance (gradient-based):")
         for feat, imp in sorted(importance.items(), key=lambda x: -x[1]):

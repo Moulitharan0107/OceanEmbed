@@ -4,12 +4,12 @@
 
 **Answer:** The PPT specifies 7 surface inputs: SST, SSS, SSH, Winds (u10, v10), and Currents (u, v). We implemented all 7:
 - SST: Real from NOAA OISST (98.7% coverage)
-- SSS: Climatological fallback from WOA18 (SMOS ERDDAP returns 403)
+- SSS: Real from CMEMS GLORYS12V1 where available, WOA18 climatology fallback
 - SSH: Real from NESDIS Satellite Altimetry (100%)
 - Winds: Real from ERA5 (99.7%)
-- Currents: Interpolated from nearest cached values (100%)
+- Currents: Real from CMEMS GLORYS12V1 where available, nearest-neighbor interpolation fallback
 
-All sources are clearly labeled in API responses and code. Climatological/interpolated values are honest approximations, not fabricated data.
+CMEMS integration is active: 29/2,992 profiles (1.0%) have real CMEMS SSS and currents so far. Each profile query takes ~60 seconds via the `copernicusmarine` Python toolbox. Full extraction requires ~50 hours of API calls. All sources are clearly labeled in API responses and code (sss_source, currents_source columns).
 
 ---
 
@@ -33,11 +33,11 @@ This is fundamentally different from a 1D point-wise model because it learns spa
 
 ## Q4: How do you handle missing data (SSS, currents)?
 
-**Answer:** We use transparent fallback mechanisms:
-- **SSS:** WOA18 monthly climatology (World Ocean Atlas) — a scientifically validated climatological product, not fabricated
-- **Currents:** Nearest-neighbor interpolation from cached HYCOM data — physically reasonable approximation
+**Answer:** We use a tiered approach with transparent source tracking:
+- **SSS:** Real from CMEMS GLORYS12V1 where available (29 profiles so far, 1.0%). WOA18 climatology as fallback for remaining profiles.
+- **Currents:** Real from CMEMS GLORYS12V1 where available. Nearest-neighbor interpolation as fallback for remaining profiles.
 
-Both are clearly labeled as "climatological" or "interpolated" in API responses. The model learns from these values during training, and the API reports which source each feature came from.
+Every row in the dataset has `sss_source` and `currents_source` columns indicating whether the value is "cmems" (real) or "climatology_fallback"/"interpolated_fallback" (approximation). The API reports which source each feature came from. CMEMS extraction is ongoing at ~60 seconds per profile.
 
 ---
 
