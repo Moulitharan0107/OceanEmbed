@@ -11,16 +11,22 @@ const trainedBounds = [[-3, 37], [28, 103]];
 const map = L.map('map', {
     center: [12, 72],
     zoom: 4,
-    minZoom: 3,
+    minZoom: 4,
     maxZoom: 12,
     maxBounds: trainedBounds,
     maxBoundsViscosity: 1.0,
 });
 map.fitBounds(trainedBounds);
 
-// Free tile layer (no API key required)
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
+// Enforce region lock: prevent panning outside bounds
+map.on('drag', function() {
+    map.panInsideBounds(trainedBounds, { animate: false });
+});
+
+// Dark theme tiles (CARTO dark_all, free, no API key)
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    subdomains: 'abcd',
     maxZoom: 19,
 }).addTo(map);
 
@@ -458,85 +464,7 @@ function updateDataModeBadge(data) {
     }
 }
 
-// ============================================================
-//  Cyclone SST Overlay
-// ============================================================
 
-let cycloneLayer = null;
-
-async function showCycloneSST(phase) {
-    clearCycloneOverlay();
-    const label = document.getElementById('cycloneLabel');
-    label.textContent = 'Loading SST overlay...';
-    
-    try {
-        const resp = await fetch(`/api/cyclone-sst?phase=${phase}`);
-        if (!resp.ok) throw new Error('Failed to fetch SST data');
-        const data = await resp.json();
-        
-        // Build heatmap from SST grid
-        const lats = data.lats;
-        const lons = data.lons;
-        const sst = data.sst;
-        const minT = data.colorbar.min;
-        const maxT = data.colorbar.max;
-        
-        // Color scale: blue (cold) -> yellow -> red (warm)
-        function tempToColor(t) {
-            if (t === null) return 'rgba(0,0,0,0)';
-            const norm = Math.max(0, Math.min(1, (t - minT) / (maxT - minT)));
-            let r, g, b;
-            if (norm < 0.5) {
-                r = Math.round(norm * 2 * 255);
-                g = Math.round(norm * 2 * 200 + 55);
-                b = Math.round((1 - norm * 2) * 200 + 55);
-            } else {
-                r = Math.round(255);
-                g = Math.round((1 - (norm - 0.5) * 2) * 200 + 55);
-                b = Math.round((1 - norm) * 100);
-            }
-            return `rgba(${r},${g},${b},0.6)`;
-        }
-        
-        // Create rectangle overlays
-        const rectangles = [];
-        for (let i = 0; i < lats.length - 1; i++) {
-            for (let j = 0; j < lons.length - 1; j++) {
-                const t = sst[i] ? sst[i][j] : null;
-                if (t === null) continue;
-                const rect = L.rectangle(
-                    [[lats[i], lons[j]], [lats[i + 1], lons[j + 1]]],
-                    {
-                        color: 'transparent',
-                        weight: 0,
-                        fillColor: tempToColor(t),
-                        fillOpacity: 0.6,
-                        interactive: false,
-                    }
-                );
-                rectangles.push(rect);
-            }
-        }
-        
-        cycloneLayer = L.layerGroup(rectangles).addTo(map);
-        map.setView([15, 85], 4);
-        
-        const phaseLabel = phase === 'before' ? 'Before' : 'During';
-        label.innerHTML = `<strong>${data.description}</strong><br>` +
-            `Cyclone Fani made landfall in Odisha on May 3, 2019.<br>` +
-            `${phaseLabel} SST mean: ${(sst.flat().filter(t => t !== null).reduce((a, b) => a + b, 0) / sst.flat().filter(t => t !== null).length).toFixed(1)}°C`;
-    } catch (err) {
-        label.textContent = `Error: ${err.message}`;
-    }
-}
-
-function clearCycloneOverlay() {
-    if (cycloneLayer) {
-        map.removeLayer(cycloneLayer);
-        cycloneLayer = null;
-    }
-    document.getElementById('cycloneLabel').textContent = '';
-}
 
 // ============================================================
 //  Initialize
