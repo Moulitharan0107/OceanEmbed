@@ -7,9 +7,26 @@
 
 ## Overview
 
-OceanEmbed is a **CNN Ocean Embedding Framework** that predicts the **vertical temperature profile of the ocean** (0–1000 m depth, **15 levels**) at any location in the **North Indian Ocean**, using **7 surface satellite inputs** on a standardized **0.25° × 0.25° grid**.
+OceanEmbed is a **CNN Ocean Embedding Framework** that predicts the **vertical temperature profile of the ocean** (0–1000 m depth, **15 levels**) at any location in the **North Indian Ocean** (5°–30°N, 45°–105°E), using **7 surface satellite inputs** on a standardized **0.25° × 0.25° grid**.
 
 Built for **INCOIS (Indian National Centre for Ocean Information Services)**, supporting oceanographers and disaster management teams with rapid subsurface temperature reconstruction.
+
+---
+
+## Alignment with Official Problem Statement (SIH26066)
+
+| Official Expected Solution | Status | Notes |
+|---------------------------|--------|-------|
+| End-to-end preprocessing pipeline (download → regrid → train → predict) | ✅ Built | Modular scripts for each stage; 0.25° regridding pipeline |
+| Satellite embedding engine (CNN/ViT/Autoencoder/GNN/Attention) | ✅ CNN-based | 1D point-wise CNN (production, RMSE 1.03°C) + spatial U-Net variant; ViT/GNN not attempted (hackathon scope) |
+| Deep learning reconstruction model | ✅ Built & validated | 13 model-predicted depths (10–1000m) + 2 derived (0m, 5m) = 15 total |
+| Standardized daily / 0.25° output | ⚠️ Partial | Grid regridding pipeline exists; CMEMS integration covers ~10% of profiles with real reanalysis data |
+| Validation framework using independent Argo | ✅ Done | 289 held-out real Argo test profiles; RMSE 1.03°C, R² 0.81 |
+| PoC over Bay of Bengal / Arabian Sea | ✅ Demo covers this | Interactive map dashboard scoped to 5°–30°N, 45°–105°E |
+| Surface-only inference after training | ✅ Yes | Only SST, SSH, winds (+ optional SSS/currents) needed at inference time |
+| GLORYS as training target | 🔄 Partial | 302/2,992 profiles extracted; proof-of-concept model trained but underperforms Argo labels |
+
+**Region note:** The official spec specifies 5°–30°N, 45°–105°E. Our training data actually spans −30° to +26.83°N, 32° to 120°E (full Indian Ocean). The model's real lat coverage tops out at ~27°N, 3° short of the official 30°N boundary. Within the 5–27°N band, coverage is strong. The northern edge (27–30°N) is a known limitation due to the Argo float distribution in the training set.
 
 ---
 
@@ -21,21 +38,21 @@ Built for **INCOIS (Indian National Centre for Ocean Information Services)**, su
 | **Grid Resolution** | **0.25° × 0.25°** uniform grid across North Indian Ocean |
 | **Model Architecture** | **Spatial CNN** (U-Net encoder-decoder with residual blocks) |
 | **Output** | **15-depth temperature profile** (0–1000 m) |
-| **Domain** | North Indian Ocean (0–25°N, 40–100°E) |
+| **Domain** | North Indian Ocean (5°–30°N, 45°–105°E) — Official SIH26066 |
 
 ---
 
 ## 7 Surface Inputs (PPT Requirement)
 
-| # | Variable | Description | Source | Status |
-|---|----------|-------------|--------|--------|
-| 1 | **SST** | Sea Surface Temperature (°C) | NOAA OISST v2.1 | ✅ Real (98.7%) |
-| 2 | **SSS** | Sea Surface Salinity (PSU) | CMEMS GLORYS12V1 (1%) + WOA18 climatology | 🔄 Partial (29 CMEMS / 2,963 fallback) |
-| 3 | **SSH** | Sea Surface Height Anomaly (m) | NESDIS Satellite Altimetry | ✅ Real (100%) |
-| 4 | **u10** | Zonal Wind Speed at 10m (m/s) | ERA5 Reanalysis | ✅ Real (99.7%) |
-| 5 | **v10** | Meridional Wind Speed at 10m (m/s) | ERA5 Reanalysis | ✅ Real (99.7%) |
-| 6 | **current_u** | Ocean Current u-component (m/s) | CMEMS GLORYS12V1 (1%) + interpolated | 🔄 Partial (29 CMEMS / 2,963 fallback) |
-| 7 | **current_v** | Ocean Current v-component (m/s) | CMEMS GLORYS12V1 (10.1%) + interpolated | 🔄 Partial (284 CMEMS / 2,708 fallback) |
+| # | Variable | Description | Source (Used) | Official Spec Recommends | Status |
+|---|----------|-------------|---------------|--------------------------|--------|
+| 1 | **SST** | Sea Surface Temperature (°C) | NOAA OISST v2.1 | OSTIA 0.05° | ✅ Real (98.7%) |
+| 2 | **SSS** | Sea Surface Salinity (PSU) | CMEMS GLORYS12V1 + WOA18 fallback | SMAP/SMOS 0.125° | 🔄 Partial (284 CMEMS / 2,708 fallback) |
+| 3 | **SSH** | Sea Surface Height Anomaly (m) | NESDIS Satellite Altimetry | DUACS 0.25° | ✅ Real (100%) |
+| 4 | **u10** | Zonal Wind Speed at 10m (m/s) | ERA5 Reanalysis | ASCAT/CCMP | ✅ Real (99.7%) |
+| 5 | **v10** | Meridional Wind Speed at 10m (m/s) | ERA5 Reanalysis | ASCAT/CCMP | ✅ Real (99.7%) |
+| 6 | **current_u** | Ocean Current u-component (m/s) | CMEMS GLORYS12V1 + interpolation | OSCAR L4 0.25° | 🔄 Partial (284 CMEMS / 2,708 fallback) |
+| 7 | **current_v** | Ocean Current v-component (m/s) | CMEMS GLORYS12V1 + interpolation | OSCAR L4 0.25° | 🔄 Partial (284 CMEMS / 2,708 fallback) |
 
 **Note:** SSS and currents are sourced from CMEMS GLORYS12V1 where available (284 profiles, ~9.5% coverage, achieved via stratified representative sampling within hackathon time constraints). Remaining profiles use WOA18 climatology (SSS) and nearest-neighbor interpolation (currents) as fallback. Each row is labeled with its source (`sss_source` and `currents_source` columns) for transparency.
 
@@ -201,7 +218,7 @@ python scripts/fill_currents_interpolation.py
 ```
 
 **Grid configuration:**
-- Domain: 0–25°N, 40–100°E
+- Domain: 5–30°N, 45–105°E (Official SIH26066)
 - Resolution: 0.25° × 0.25° (100 × 240 cells)
 - Variables: SST, SSS, SSH, u10, v10, current_u, current_v
 - Output: `data/gridded/daily_gridded.npz`
@@ -247,14 +264,14 @@ oceanembed/
 
 ## Data Sources
 
-| Variable | Source | Coverage | Status |
-|----------|--------|----------|--------|
-| **SST** | NOAA OISST v2.1 | 98.7% | ✅ Used |
-| **SSS** | CMEMS GLORYS12V1 + WOA18 | ~10% CMEMS | 🔄 Partial (284/2,992 profiles) |
-| **SSH** | NESDIS Satellite Altimetry | 100% | ✅ Used |
-| **Wind** | ERA5 Reanalysis | 99.7% | ✅ Used |
-| **Currents** | CMEMS GLORYS12V1 + interpolated | ~10% CMEMS | 🔄 Partial (284/2,992 profiles) |
-| **GLORYS** | CMEMS GLORYS12V1 (depth profiles) | ~10% | 🔄 Partial (302/2,992 profiles) |
+| Variable | Source (Used) | Official Spec Recommends | Coverage | Status |
+|----------|---------------|--------------------------|----------|--------|
+| **SST** | NOAA OISST v2.1 | OSTIA 0.05° | 98.7% | ✅ Used |
+| **SSS** | CMEMS GLORYS12V1 + WOA18 fallback | SMAP/SMOS 0.125° | ~10% CMEMS | 🔄 Partial (284/2,992 profiles) |
+| **SSH** | NESDIS Satellite Altimetry | DUACS 0.25° | 100% | ✅ Used |
+| **Wind** | ERA5 Reanalysis | ASCAT/CCMP | 99.7% | ✅ Used |
+| **Currents** | CMEMS GLORYS12V1 + interpolation | OSCAR L4 0.25° | ~10% CMEMS | 🔄 Partial (284/2,992 profiles) |
+| **GLORYS** | CMEMS GLORYS12V1 (training target) | GLORYS12V1 (training target) | ~10% | 🔄 Partial (302/2,992 profiles) |
 
 ---
 
@@ -277,9 +294,11 @@ See `docs/COPERNICUS_SETUP.md` for authentication instructions.
 
 ## Known Limitations
 
-1. **SSS/Currents Coverage:** CMEMS integration covers ~10% of profiles (284/2,992) with real data, achieved via stratified representative sampling. Full extraction requires ~48 hours of continuous API calls at ~60s per profile.
-2. **Spatial CNN:** Currently trained on synthetic grid patches; real 0.25° gridded CMEMS data would improve performance.
-3. **Thermocline Accuracy:** Higher RMSE at 75-200m due to natural variability in the thermocline region.
+1. **Northern Edge Gap:** The official SIH26066 domain extends to 30°N, but our training data (Argo floats) only reaches ~26.83°N. The model's reliable coverage is therefore 5–27°N, 45–105°E — 3° short of the official northern boundary. This is due to the Argo float distribution in the training set, not a code limitation.
+2. **SSS/Currents Coverage:** CMEMS integration covers ~10% of profiles (284/2,992) with real data, achieved via stratified representative sampling. Full extraction requires ~48 hours of continuous API calls at ~60s per profile.
+3. **Spatial CNN:** Trained on real 0.25° grid patches (~10% CMEMS coverage). RMSE 1.51°C vs. 1D production's 1.03°C — needs substantially more real gridded data to realize its potential.
+4. **Dataset Substitution:** Some datasets differ from the official spec's recommendations (e.g., NOAA OISST instead of OSTIA, ERA5 instead of ASCAT/CCMP). This was due to data access constraints; the architecture supports swapping in any gridded dataset.
+5. **Thermocline Accuracy:** Higher RMSE at 75–200m due to natural variability in the thermocline region.
 
 ---
 

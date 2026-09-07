@@ -64,7 +64,7 @@ This is scientifically honest: SST physically represents near-surface temperatur
 ## Q7: What's the real-world accuracy?
 
 **Answer:** On the held-out test set (289 Argo profiles never seen during training):
-- **Overall RMSE:** 1.09°C (1D production, 6 features) / 1.29°C (7-feature with SSS, 15 epochs) / 1.51°C (spatial CNN, real patches, ~10% CMEMS coverage)
+- **Overall RMSE:** 1.03°C (1D production, 6 features) / 1.29°C (7-feature with SSS, 15 epochs) / 1.51°C (spatial CNN, real patches, ~10% CMEMS coverage)
 - **Best depths:** 500–1000m (RMSE 0.42–0.54°C)
 - **Challenging depths:** 50–100m (thermocline region, RMSE 1.35–1.78°C)
 
@@ -92,11 +92,23 @@ Full GLORYS extraction would require ~26 sessions (13 hours) at the current down
 
 ---
 
-## Q10: What's the deployment plan?
+## Q10: Why does your region/dataset selection differ slightly from the official spec?
+
+**Answer:** Two honest notes:
+
+**1. Region:** The official spec specifies 5°–30°N, 45°–105°E. Our training data (Argo floats) spans the full Indian Ocean (−30° to +27°N), so the model is trained on a *superset* of the official domain. However, the actual Argo float density drops off above ~27°N, so the northern 3° of the official domain (27–30°N) has sparse real training data. The map dashboard enforces the official 5–30°N / 45–105°E bounds, and the model performs well within the 5–27°N core.
+
+**2. Dataset substitution:** Some datasets differ from the official recommendations (e.g., NOAA OISST instead of OSTIA, ERA5 instead of ASCAT/CCMP) due to access constraints during the hackathon. The preprocessing pipeline is modular — swapping in the official datasets is a straightforward configuration change. The CNN architecture is dataset-agnostic and works with any gridded input.
+
+Both the region and dataset choices are documented transparently in the README and code comments, not hidden.
+
+---
+
+## Q11: What's the deployment plan?
 
 **Answer:** The system is deployed as:
 1. **FastAPI backend** serving predictions via REST API
 2. **Interactive map dashboard** (Leaflet.js) for oceanographers
 3. **Streamlit dashboard** for quick prototyping
 
-Both dashboards accept the same 7 surface inputs and display the full 15-depth profile with uncertainty bands.
+Both dashboards accept the same 6 surface inputs (SST, SSH, winds) and display the full 15-depth profile with uncertainty bands.

@@ -7,8 +7,8 @@
 //  Map Setup — Single, authoritative region lock
 // ============================================================
 
-// Exact trained domain: North Indian Ocean 0-25N, 40-100E
-const bounds = L.latLngBounds([[0, 40], [25, 100]]);
+// Official SIH26066 domain: North Indian Ocean 5-30N, 45-105E
+const bounds = L.latLngBounds([[5, 45], [30, 105]]);
 const paddedBounds = bounds.pad(0.05);
 
 // Create map — zoom IN freely, zoom OUT capped at region boundary
@@ -44,19 +44,19 @@ map.on('drag', function() {
 
 console.log('Map initialized — zoom in freely, zoom out capped at region boundary');
 
-// Dotted boundary rectangle for trained domain — dark navy for high contrast
-L.rectangle([[0, 40], [25, 100]], {
+// Dotted boundary rectangle for official SIH26066 domain — dark navy for high contrast
+L.rectangle([[5, 45], [30, 105]], {
     color: '#0a1a2f',
     weight: 3,
     fill: false,
     dashArray: '6,6'
 }).addTo(map);
 
-// Label for the trained region — dark pill with white text
-L.marker([25.8, 70], {
+// Label for the official domain — dark pill with white text
+L.marker([30.5, 75], {
     icon: L.divIcon({
         className: '',
-        html: '<div style="background: rgba(10,22,40,0.92); border: 1px solid rgba(0,229,255,0.4); border-radius: 4px; padding: 4px 10px; font-size: 11px; color: #ffffff; white-space: nowrap; font-family: Inter, sans-serif; letter-spacing: 0.3px;">Model Trained: Indian Ocean (-30°–27°N, 32°–120°E) | UI Scoped to North Indian Ocean (0°–25°N, 40°–100°E)</div>',
+        html: '<div style="background: rgba(10,22,40,0.92); border: 1px solid rgba(0,229,255,0.4); border-radius: 4px; padding: 4px 10px; font-size: 11px; color: #ffffff; white-space: nowrap; font-family: Inter, sans-serif; letter-spacing: 0.3px;">Official Domain: North Indian Ocean (5°–30°N, 45°–105°E) | Training data: −30°–27°N</div>',
         iconSize: [0, 0],
         iconAnchor: [-8, 12]
     })
@@ -71,9 +71,9 @@ map.on('click', function(e) {
     const lat = Math.round(e.latlng.lat * 10) / 10;
     const lon = Math.round(e.latlng.lng * 10) / 10;
     
-    // Defense: reject clicks outside trained region
-    if (lat < 0 || lat > 25 || lon < 40 || lon > 100) {
-        alert('Selected point is outside the model\'s trained region (0-25°N, 40-100°E).');
+    // Defense: reject clicks outside official SIH26066 domain
+    if (lat < 5 || lat > 30 || lon < 45 || lon > 105) {
+        alert('Selected point is outside the official SIH26066 domain (5-30°N, 45-105°E). Please select a point within the North Indian Ocean.');
         return;
     }
     
@@ -127,8 +127,8 @@ async function runPrediction() {
         return;
     }
     
-    if (lat < -30 || lat > 30 || lon < 30 || lon > 120) {
-        alert('Please select a point within the Indian Ocean domain (30°E–120°E, 30°S–30°N).');
+    if (lat < 5 || lat > 30 || lon < 45 || lon > 105) {
+        alert('Please select a point within the official SIH26066 domain (5-30°N, 45-105°E).');
         return;
     }
     

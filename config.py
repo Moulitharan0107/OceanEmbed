@@ -4,12 +4,22 @@ Central configuration for the project - CNN Ocean Embedding Framework
 Matches SIH26066 PPT: 7 surface inputs, spatial CNN, 15-depth output
 """
 
-# Geographic bounds for North Indian Ocean domain
+# Geographic bounds — Official SIH26066 domain (Bay of Bengal / Arabian Sea)
+# NOTE: Training data actual coverage is -30° to +26.83°N, 32° to 120°E.
+# The official spec is 5-30°N, 45-105°E. The map/UI enforce the official spec,
+# but the model's real lat coverage tops out at ~27°N (see Known Limitations).
 REGION = {
-    "lat_min": 0.0,
-    "lat_max": 25.0,
-    "lon_min": 40.0,
-    "lon_max": 100.0,
+    "lat_min": 5.0,
+    "lat_max": 30.0,
+    "lon_min": 45.0,
+    "lon_max": 105.0,
+}
+# Actual training data coverage (for documentation/validation)
+TRAINING_DATA_REGION = {
+    "lat_min": -30.0,
+    "lat_max": 26.83,
+    "lon_min": 32.32,
+    "lon_max": 119.96,
 }
 
 # Grid configuration (0.25° × 0.25°)

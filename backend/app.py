@@ -79,7 +79,7 @@ async def startup():
                 "combined_samples": metrics.get("n_test_samples", 0),
                 "surface_inputs": ["sst", "sss", "ssh", "u10", "v10", "current_u", "current_v"],
                 "date_range": "2019-2024",
-                "region": "North Indian Ocean (0-25N, 40-100E)",
+                "region": "North Indian Ocean (5-30N, 45-105E) — Official SIH26066 domain",
                 "sss_source": "WOA18 climatology (SMOS 403)",
                 "currents_source": "nearest-neighbor interpolated (HYCOM limited)",
             }
@@ -134,8 +134,8 @@ async def startup():
 # ============================================================
 
 class PredictionRequest(BaseModel):
-    latitude: float = Field(..., ge=-30, le=30, description="Latitude (Indian Ocean: -30 to 30)")
-    longitude: float = Field(..., ge=30, le=120, description="Longitude (Indian Ocean: 30 to 120)")
+    latitude: float = Field(..., ge=5, le=30, description="Latitude (Official SIH26066 domain: 5°N to 30°N)")
+    longitude: float = Field(..., ge=45, le=105, description="Longitude (Official SIH26066 domain: 45°E to 105°E)")
     date: str = Field("2022-06-15", description="Date (YYYY-MM-DD)")
     sst: Optional[float] = Field(None, description="Sea Surface Temperature (°C). Auto-estimated if not provided.")
     ssh: Optional[float] = Field(None, description="Sea Surface Height Anomaly (m)")
@@ -363,8 +363,8 @@ async def get_metrics():
 
 @app.get("/api/features", response_model=FeaturesResponse)
 async def get_features_endpoint(
-    lat: float = Query(..., ge=-30, le=30),
-    lon: float = Query(..., ge=30, le=120),
+    lat: float = Query(..., ge=5, le=30),
+    lon: float = Query(..., ge=45, le=105),
     date: str = Query("2022-06-15"),
 ):
     """Get surface features for a location with real data lookup."""
